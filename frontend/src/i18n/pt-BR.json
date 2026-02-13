@@ -1,0 +1,35 @@
+{
+    "common": {
+        "save": "Salvar",
+        "cancel": "Cancelar",
+        "delete": "Excluir",
+        "edit": "Editar",
+        "actions": "Ações",
+        "required": "Campo obrigatório"
+    },
+    "auth": {
+        "login": "Entrar",
+        "email": "E-mail",
+        "password": "Senha",
+        "welcome": "Bem-vindo ao CRM"
+    },
+    "menu": {
+        "dashboard": "Dashboard",
+        "clientes": "Clientes",
+        "negocios": "Negócios",
+        "produtos": "Produtos",
+        "financeiro": "Financeiro",
+        "contas_pagar": "Contas a Pagar",
+        "contas_receber": "Contas a Receber",
+        "logout": "Sair"
+    },
+    "financeiro": {
+        "descricao": "Descrição",
+        "valor": "Valor",
+        "vencimento": "Vencimento",
+        "status": "Status",
+        "pagar": "Pagar",
+        "receber": "Receber",
+        "notificar": "Notificar (Telegram)"
+    }
+}

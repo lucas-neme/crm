@@ -1,0 +1,312 @@
+<template>
+  <v-container fluid class="page">
+    <div class="page-header">
+      <div>
+        <h2>{{ $t('menu.contas_pagar') }}</h2>
+        <p class="subtitle">Gerencie suas contas a pagar cadastradas</p>
+      </div>
+      <div class="header-actions">
+        <v-text-field
+          v-model="search"
+          label="Pesquisar"
+          prepend-inner-icon="mdi-magnify"
+          density="compact"
+          hide-details
+          variant="outlined"
+          class="search-field"
+        />
+        <ColumnManagerMenu
+          v-model="visibleColumns"
+          :columns="columns"
+          @reset="resetColumns"
+          @select-all="selectAllColumns"
+        />
+        <v-btn color="primary" @click="dialog = true">+ NOVA CONTA</v-btn>
+      </div>
+    </div>
+
+    <v-card elevation="2" class="table-card">
+      <v-card-text>
+        <v-skeleton-loader
+          v-if="store.loading"
+          type="table-heading, table-row-divider@6"
+          class="bg-transparent"
+        ></v-skeleton-loader>
+
+        <template v-else>
+          <v-data-table
+            v-if="filteredItems.length > 0"
+            :headers="headers"
+            :items="filteredItems"
+            no-data-text="Nenhum registro encontrado"
+            items-per-page-text="Itens por página"
+            page-text="{0}-{1} de {2}"
+          >
+            <template #item.valor="{ item }">{{ formatCurrency(item.valor) }}</template>
+            <template #item.status="{ item }">
+              <v-chip :color="getStatusColor(item.status)">{{ item.status }}</v-chip>
+            </template>
+            <template #item.dtVencimento="{ item }">{{ formatDate(item.dtVencimento) }}</template>
+            <template #item.dtPagamento="{ item }">{{ formatDate(item.dtPagamento) }}</template>
+            <template #item.actions="{ item }">
+              <v-btn
+                v-if="item.status === 'PENDENTE'"
+                icon="mdi-check-circle"
+                size="small"
+                color="success"
+                variant="text"
+                @click="markAsPaid(item)"
+                title="Marcar como Pago"
+              ></v-btn>
+            </template>
+          </v-data-table>
+
+          <div v-if="filteredItems.length === 0" class="empty-state">
+            <v-icon icon="mdi-cash-minus" size="64" color="grey-lighten-1" class="mb-4" />
+            <p class="text-h6 text-grey-darken-1 mb-2">Você ainda não tem Contas a Pagar</p>
+            <p class="text-body-2 text-grey mb-6">Cadastre sua primeira conta a pagar aqui</p>
+            <v-btn color="primary" @click="dialog = true" prepend-icon="mdi-plus">
+              Nova Conta
+            </v-btn>
+          </div>
+        </template>
+      </v-card-text>
+    </v-card>
+
+    <v-dialog v-model="dialog" max-width="500px">
+      <v-card class="rounded-lg">
+        <v-card-title class="text-h6 font-weight-bold pa-4 bg-grey-lighten-4">
+          <v-icon start icon="mdi-plus" />
+          Nova Conta a Pagar
+        </v-card-title>
+        <v-card-text class="pa-4 pt-6">
+          <v-row dense>
+             <v-col cols="12">
+                <v-text-field 
+                  v-model="newItem.descricao" 
+                  label="Descrição"
+                  variant="outlined"
+                  density="comfortable"
+                ></v-text-field>
+             </v-col>
+             <v-col cols="12" md="6">
+                <v-text-field 
+                  v-model="newItem.valor" 
+                  label="Valor" 
+                  type="number"
+                  prefix="R$"
+                  variant="outlined"
+                  density="comfortable"
+                ></v-text-field>
+             </v-col>
+             <v-col cols="12" md="6">
+                <v-text-field 
+                  v-model="newItem.dtVencimento" 
+                  label="Vencimento" 
+                  type="date"
+                  variant="outlined"
+                  density="comfortable"
+                ></v-text-field>
+             </v-col>
+          </v-row>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="dialog = false" class="text-capitalize">Cancelar</v-btn>
+          <v-btn color="primary" variant="flat" @click="save" class="text-capitalize">Salvar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
+      {{ snackbarText }}
+      <template #actions>
+        <v-btn color="white" variant="text" @click="snackbar = false">Fechar</v-btn>
+      </template>
+    </v-snackbar>
+  </v-container>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useFinanceiroStore } from '../../stores/financeiroStore'
+import ColumnManagerMenu from '../../components/common/ColumnManagerMenu.vue'
+import { useColumnManager } from '../../composables/useColumnManager'
+
+const { t } = useI18n()
+const store = useFinanceiroStore()
+
+const dialog = ref(false)
+const items = computed(() => store.contasPagar || [])
+const search = ref('')
+
+const snackbar = ref(false)
+const snackbarText = ref('')
+const snackbarColor = ref('success')
+
+function showSnackbar(text: string, color: string = 'success') {
+  snackbarText.value = text
+  snackbarColor.value = color
+  snackbar.value = true
+}
+
+interface Item {
+  descricao: string
+  valor: string
+  dtVencimento: string
+}
+
+const newItem = ref<Item>({ descricao: '', valor: '', dtVencimento: '' })
+
+const baseHeaders = computed(() => [
+  { title: 'ID', key: 'id' },
+  { title: t('financeiro.descricao'), key: 'descricao' },
+  { title: t('financeiro.valor'), key: 'valor' },
+  { title: t('financeiro.vencimento'), key: 'dtVencimento' },
+  { title: 'Data de Pagamento', key: 'dtPagamento' },
+  { title: t('financeiro.status'), key: 'status' },
+  { title: t('common.actions'), key: 'actions', sortable: false },
+])
+
+const {
+  columns,
+  visibleColumns,
+  selectAllColumns,
+  resetColumns,
+  filteredHeaders,
+} = useColumnManager('crm.columns.contas-pagar', [
+  { key: 'id', label: 'ID', defaultVisible: false },
+  { key: 'descricao', label: 'Descrição' },
+  { key: 'valor', label: 'Valor' },
+  { key: 'dtVencimento', label: 'Vencimento' },
+  { key: 'dtPagamento', label: 'Data de Pagamento', defaultVisible: false },
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: 'Ações', locked: true },
+])
+
+const headers = computed(() => filteredHeaders(baseHeaders.value))
+
+const filteredItems = computed(() => {
+  const term = search.value.trim().toLowerCase()
+  if (!term) return items.value
+
+  return items.value.filter((item) => {
+    const text = [item.id, item.descricao, item.valor, item.dtVencimento, item.dtPagamento, item.status]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+
+    return text.includes(term)
+  })
+})
+
+function getStatusColor(status: string) {
+  if (status === 'PAGO') return 'green'
+  if (status === 'PENDENTE') return 'orange'
+  return 'grey'
+}
+
+const formatCurrency = (value: number | string | undefined) => {
+  if (value === undefined || value === null || (typeof value === 'number' && isNaN(value))) return '-'
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value))
+}
+
+function formatDate(value?: string) {
+  if (!value) return '-'
+  return new Date(value).toLocaleDateString('pt-BR')
+}
+
+async function save() {
+  if (!newItem.value.descricao || !newItem.value.valor || !newItem.value.dtVencimento) {
+    showSnackbar('Preencha todos os campos', 'warning')
+    return
+  }
+
+  const valorFormatado = String(newItem.value.valor).replace(',', '.')
+  const valorNumero = Number(valorFormatado)
+
+  if (isNaN(valorNumero)) {
+    showSnackbar('Valor inválido', 'error')
+    return
+  }
+
+  const result = await store.createContaPagar({
+    descricao: newItem.value.descricao,
+    valor: valorNumero,
+    dtVencimento: newItem.value.dtVencimento,
+  })
+
+  if (result.success) {
+    dialog.value = false
+    newItem.value = { descricao: '', valor: '', dtVencimento: '' }
+    showSnackbar('Conta criada com sucesso!', 'success')
+  } else {
+    showSnackbar(result.message || 'Erro ao criar conta', 'error')
+  }
+}
+
+async function markAsPaid(item: any) {
+  if (confirm(`Confirmar pagamento de ${item.descricao}?`)) {
+    const success = await store.payConta(item.id)
+    showSnackbar(success ? 'Conta paga com sucesso!' : 'Erro ao pagar conta', success ? 'success' : 'error')
+  }
+}
+
+onMounted(() => {
+  store.fetchContasPagar()
+})
+
+watch(() => store.error, (newVal) => {
+  if (newVal) showSnackbar(newVal, 'error')
+})
+</script>
+
+<style scoped>
+.page {
+  padding: 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.page-header h2 {
+  margin: 0;
+  color: #111827;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.search-field {
+  width: 300px;
+}
+
+.table-card {
+  border-radius: 16px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+</style>

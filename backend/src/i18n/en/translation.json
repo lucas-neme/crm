@@ -1,0 +1,28 @@
+{
+  "cliente": {
+    "created": "Client created successfully",
+    "updated": "Client updated successfully",
+    "deleted": "Client deleted successfully",
+    "notFound": "Client not found",
+    "alreadyExists": "Client already exists",
+    "documentoAlreadyExists": "Document already registered"
+  },
+  "produto": {
+    "created": "Product created successfully",
+    "updated": "Product updated successfully",
+    "deleted": "Product deleted successfully",
+    "notFound": "Product not found"
+  },
+  "negocio": {
+    "created": "Business created successfully",
+    "updated": "Business updated successfully",
+    "deleted": "Business deleted successfully",
+    "notFound": "Business not found",
+    "enderecoRequired": "Delivery address is required when delivery is true"
+  },
+  "validation": {
+    "required": "Required field",
+    "invalidEmail": "Invalid email",
+    "minLength": "Minimum length not met"
+  }
+}

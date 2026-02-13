@@ -1,0 +1,27 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --erp-bg-start: #edf3fb;
+  --erp-bg-end: #e4edf8;
+  --erp-text: #1f2937;
+}
+
+body {
+  font-family: 'Segoe UI', 'Manrope', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(180deg, var(--erp-bg-start) 0%, var(--erp-bg-end) 100%);
+  color: var(--erp-text);
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}

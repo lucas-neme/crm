@@ -1,0 +1,28 @@
+{
+  "cliente": {
+    "created": "Cliente criado com sucesso",
+    "updated": "Cliente atualizado com sucesso",
+    "deleted": "Cliente excluído com sucesso",
+    "notFound": "Cliente não encontrado",
+    "alreadyExists": "Cliente já existe",
+    "documentoAlreadyExists": "Documento já cadastrado"
+  },
+  "produto": {
+    "created": "Produto criado com sucesso",
+    "updated": "Produto atualizado com sucesso",
+    "deleted": "Produto excluído com sucesso",
+    "notFound": "Produto não encontrado"
+  },
+  "negocio": {
+    "created": "Negócio criado com sucesso",
+    "updated": "Negócio atualizado com sucesso",
+    "deleted": "Negócio excluído com sucesso",
+    "notFound": "Negócio não encontrado",
+    "enderecoRequired": "Endereço de entrega é obrigatório quando entrega é verdadeiro"
+  },
+  "validation": {
+    "required": "Campo obrigatório",
+    "invalidEmail": "Email inválido",
+    "minLength": "Tamanho mínimo não atendido"
+  }
+}
