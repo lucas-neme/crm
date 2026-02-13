@@ -44,6 +44,18 @@ services:
       - crm-network
       - proxynet
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crm-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - crm-network
+      - proxynet
+
 volumes:
   postgres_data:
 
