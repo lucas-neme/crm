@@ -3,6 +3,8 @@ import { ref } from 'vue'
 export interface BrandingSettings {
   nomeCRM: string
   logoUrl: string
+  ownerPhotoUrl: string
+  ownerName: string
   logoScale: number
   logoOffsetX: number
   logoOffsetY: number
@@ -19,6 +21,8 @@ const STORAGE_KEY = 'crm.branding'
 const defaultBranding: BrandingSettings = {
   nomeCRM: 'CRM',
   logoUrl: '',
+  ownerPhotoUrl: '/assets/images/owners/owner-main.png',
+  ownerName: 'Proprietário do CRM',
   logoScale: 100,
   logoOffsetX: 0,
   logoOffsetY: 0,

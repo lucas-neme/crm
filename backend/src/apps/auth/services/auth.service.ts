@@ -3,7 +3,14 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../models/user.model';
 import * as bcrypt from 'bcrypt';
+import * as nodeCrypto from 'crypto';
+
 import { Configuracao } from '../../configuracoes/models/configuracao.model';
+
+type ResetTokenEntry = {
+    email: string;
+    expiresAt: number;
+};
 
 @Injectable()
 export class AuthService {
@@ -17,7 +24,13 @@ export class AuthService {
 
     async validateUser(email: string, pass: string): Promise<any> {
         const user = await this.userModel.findOne({ where: { email } });
-        if (user && (await user.validatePassword(pass))) {
+        if (!user) return null;
+
+        if (!user.isActive) {
+            throw new UnauthorizedException('Usuario aguardando aprovacao do administrador');
+        }
+
+        if (await user.validatePassword(pass)) {
             const { passwordHash, ...result } = user.toJSON();
             return result;
         }
@@ -36,7 +49,6 @@ export class AuthService {
         };
     }
 
-    // Temporary method to seed a user if none exists
     async seedAdminUser() {
         const count = await this.userModel.count();
         if (count === 0) {
@@ -45,7 +57,7 @@ export class AuthService {
             await this.userModel.create({
                 email: 'admin@example.com',
                 name: 'Admin',
-                passwordHash: passwordHash,
+                passwordHash,
                 isActive: true,
             });
             console.log('Admin user created: admin@example.com / admin123');
@@ -55,7 +67,7 @@ export class AuthService {
     async register(name: string, email: string, password: string) {
         const existing = await this.userModel.findOne({ where: { email } });
         if (existing) {
-            return { message: 'Email já cadastrado' };
+            return { message: 'Email ja cadastrado' };
         }
 
         const salt = await bcrypt.genSalt();
@@ -69,7 +81,7 @@ export class AuthService {
         });
 
         return {
-            message: 'Usuário criado com sucesso e aguardando aprovação do administrador',
+            message: 'Usuario criado com sucesso e aguardando aprovacao do administrador',
             user: {
                 id: user.id,
                 name: user.name,
@@ -77,6 +89,48 @@ export class AuthService {
                 isActive: user.isActive,
             },
         };
+    }
+
+    async requestPasswordReset(email: string) {
+        const genericMessage = 'Se o email existir, voce recebera o link para redefinir a senha';
+        const user = await this.userModel.findOne({ where: { email } });
+        if (!user) return { message: genericMessage };
+
+        const token = nodeCrypto.randomUUID();
+        const expiresAt = Date.now() + 30 * 60 * 1000;
+
+        const tokenMap = await this.getPasswordResetTokens();
+        tokenMap[token] = { email: user.email, expiresAt };
+        await this.setPasswordResetTokens(tokenMap);
+
+        const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://crm.wampa.com.br').replace(/\/$/, '');
+        const resetLink = `${frontendBaseUrl}/login?mode=reset&token=${token}`;
+        await this.sendPasswordResetEmail(user.email, user.name, resetLink);
+
+        return { message: genericMessage };
+    }
+
+    async resetPassword(token: string, password: string) {
+        const tokenMap = await this.getPasswordResetTokens();
+        const tokenEntry = tokenMap[token];
+
+        if (!tokenEntry || tokenEntry.expiresAt < Date.now()) {
+            throw new UnauthorizedException('Token invalido ou expirado');
+        }
+
+        const user = await this.userModel.findOne({ where: { email: tokenEntry.email } });
+        if (!user) {
+            throw new UnauthorizedException('Usuario nao encontrado');
+        }
+
+        const salt = await bcrypt.genSalt();
+        user.passwordHash = await bcrypt.hash(password, salt);
+        await user.save();
+
+        delete tokenMap[token];
+        await this.setPasswordResetTokens(tokenMap);
+
+        return { message: 'Senha redefinida com sucesso' };
     }
 
     async listUsersWithPermissions() {
@@ -102,7 +156,7 @@ export class AuthService {
     async setUserActive(userId: string, isActive: boolean) {
         const user = await this.userModel.findByPk(userId);
         if (!user) {
-            throw new UnauthorizedException('Usuário não encontrado');
+            throw new UnauthorizedException('Usuario nao encontrado');
         }
 
         user.isActive = isActive;
@@ -117,7 +171,7 @@ export class AuthService {
     async setUserPermissions(userId: string, permissions: Record<string, any>) {
         const user = await this.userModel.findByPk(userId);
         if (!user) {
-            throw new UnauthorizedException('Usuário não encontrado');
+            throw new UnauthorizedException('Usuario nao encontrado');
         }
 
         const permissionsMap = await this.getPermissionsMap();
@@ -159,5 +213,28 @@ export class AuthService {
             chave: 'user_permissions_map',
             valor: JSON.stringify(map),
         });
+    }
+
+    private async getPasswordResetTokens(): Promise<Record<string, ResetTokenEntry>> {
+        const config = await this.configuracaoModel.findByPk('password_reset_tokens');
+        if (!config?.valor) return {};
+        try {
+            const parsed = JSON.parse(config.valor);
+            return typeof parsed === 'object' && parsed ? parsed : {};
+        } catch {
+            return {};
+        }
+    }
+
+    private async setPasswordResetTokens(map: Record<string, ResetTokenEntry>) {
+        await this.configuracaoModel.upsert({
+            chave: 'password_reset_tokens',
+            valor: JSON.stringify(map),
+        });
+    }
+
+    async sendPasswordResetEmail(email: string, name: string, resetLink: string) {
+        console.log(`[PASSWORD_RESET_LINK_SIMULATED] ${email} => ${resetLink}`);
+        // Nodemailer disabled temporarily
     }
 }

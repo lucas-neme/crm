@@ -27,7 +27,36 @@
 
     <v-card elevation="2" class="table-card">
       <v-card-text>
-        <v-table class="table">
+        <div v-if="mobile && filteredProdutos.length > 0" class="mobile-list">
+          <v-card
+            v-for="produto in filteredProdutos"
+            :key="produto.id"
+            class="mobile-item"
+            elevation="1"
+            @click="irParaProduto(produto.id)"
+          >
+            <div class="mobile-item-head">
+              <div>
+                <p class="mobile-code">#{{ produto.codigo !== undefined && produto.codigo !== null ? String(produto.codigo).padStart(3, '0') : '---' }}</p>
+                <h3 class="mobile-name">{{ produto.nome }}</h3>
+              </div>
+              <v-chip :color="produto.isActive ? 'blue' : 'grey-lighten-2'" size="small" variant="flat">
+                {{ produto.isActive ? 'Ativo' : 'Inativo' }}
+              </v-chip>
+            </div>
+            <p class="mobile-meta">Qtd: {{ produto.quantidade }}</p>
+            <p class="mobile-meta">R$ {{ Number.isFinite(Number(produto.valorUnitario)) ? Number(produto.valorUnitario).toFixed(2) : '0.00' }}</p>
+            <div class="mobile-actions">
+              <v-btn size="small" variant="tonal" color="primary" @click.stop="irParaEdicao(produto.id)">Editar</v-btn>
+              <v-btn size="small" variant="tonal" :color="produto.isActive ? 'warning' : 'success'" @click.stop="abrirConfirmacaoStatus(produto.id, produto.isActive)">
+                {{ produto.isActive ? 'Inativar' : 'Ativar' }}
+              </v-btn>
+              <v-btn size="small" variant="tonal" color="error" @click.stop="abrirConfirmacaoExcluir(produto.id)">Excluir</v-btn>
+            </div>
+          </v-card>
+        </div>
+
+        <v-table v-else class="table">
           <thead>
             <tr>
               <th v-if="isColumnVisible('codigo')">Código</th>
@@ -127,11 +156,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useProdutosStore } from '../../stores/produtosStore'
 import ColumnManagerMenu from '../../components/common/ColumnManagerMenu.vue'
 import { useColumnManager } from '../../composables/useColumnManager'
 
 const router = useRouter()
+const { mobile } = useDisplay()
 const { produtos, carregarProdutos, deletarProduto, atualizarProduto } = useProdutosStore()
 const search = ref('')
 
@@ -247,6 +278,50 @@ onMounted(() => {
   border-radius: 16px;
 }
 
+.mobile-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.mobile-item {
+  border-radius: 14px;
+  padding: 0.85rem;
+  border: 1px solid #d7e3f5;
+}
+
+.mobile-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.mobile-code {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #667a96;
+}
+
+.mobile-name {
+  margin: 0.15rem 0 0;
+  font-size: 1.04rem;
+  color: #173a66;
+  line-height: 1.2;
+}
+
+.mobile-meta {
+  margin: 0.32rem 0 0;
+  color: #4e6482;
+  font-size: 0.87rem;
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
 .clickable-row {
   cursor: pointer;
 }
@@ -255,5 +330,26 @@ onMounted(() => {
   text-align: center;
   padding: 2rem;
   color: #9ca3af;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .search-field {
+    width: 100% !important;
+  }
+
+  .header-actions .v-btn {
+    width: 100%;
+  }
 }
 </style>

@@ -29,6 +29,13 @@ services:
       NODE_ENV: production
       PORT: 3000
       DB_SYNCHRONIZE: "false"
+      FRONTEND_URL: https://crm.wampa.com.br
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      SMTP_SECURE: "false"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: ""
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USERNAME: postgres

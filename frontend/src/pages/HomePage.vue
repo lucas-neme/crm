@@ -1,195 +1,210 @@
 <template>
-  <div class="dashboard">
-    <v-container fluid class="dashboard-content">
-      <v-row class="mb-4" align="stretch">
+  <v-container fluid class="pa-6">
+    <!-- Stats Row -->
+    <v-row class="mb-6">
+      <v-col cols="12" sm="6" md="4">
+        <v-card class="stats-card" elevation="0">
+          <div class="stats-content">
+            <span class="stats-label">Clientes</span>
+            <div class="stats-value">{{ clientes.length }}</div>
+            <span class="stats-sub">Clientes cadastrados</span>
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="4">
+        <v-card class="stats-card" elevation="0">
+          <div class="stats-content">
+            <span class="stats-label">Produtos</span>
+            <div class="stats-value">{{ produtos.length }}</div>
+            <span class="stats-sub">Itens em estoque</span>
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="4">
+        <v-card class="stats-card" elevation="0">
+          <div class="stats-content">
+            <span class="stats-label">Negócios</span>
+            <div class="stats-value">{{ negocios.length }}</div>
+            <span class="stats-sub">Pedidos cadastrados</span>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Quick Actions Section (Desktop Only) -->
+    <v-card v-if="!mobile" class="section-card mb-6" elevation="0">
+      <div class="section-header">
+        <h2 class="section-title">Ações rápidas</h2>
+        <p class="section-desc">Gerencie tarefas rapidamente</p>
+      </div>
+
+      <v-row>
         <v-col cols="12" md="4">
-          <v-card class="stat-card" elevation="2">
-            <div class="stat-content">
-              <div>
-                <p class="stat-label">Clientes</p>
-                <h3 class="stat-value">{{ clientesCount }}</h3>
-                <p class="stat-sub">Clientes cadastrados</p>
-              </div>
+          <v-card class="action-btn-card" variant="outlined" to="/clientes/novo">
+            <div class="text-center">
+              <div class="action-btn-label">+ Novo Cliente</div>
+              <div class="action-btn-sub">Cadastrar clientes rapidamente</div>
             </div>
           </v-card>
         </v-col>
+
         <v-col cols="12" md="4">
-          <v-card class="stat-card" elevation="2">
-            <div class="stat-content">
-              <div>
-                <p class="stat-label">Produtos</p>
-                <h3 class="stat-value">{{ produtosCount }}</h3>
-                <p class="stat-sub">Itens em estoque</p>
-              </div>
+          <v-card class="action-btn-card" variant="outlined" to="/produtos/novo">
+            <div class="text-center">
+              <div class="action-btn-label">+ Novo Produto</div>
+              <div class="action-btn-sub">Gerencie itens do catálogo</div>
             </div>
           </v-card>
         </v-col>
+
         <v-col cols="12" md="4">
-          <v-card class="stat-card" elevation="2">
-            <div class="stat-content">
-              <div>
-                <p class="stat-label">Negócios</p>
-                <h3 class="stat-value">{{ negociosCount }}</h3>
-                <p class="stat-sub">Pedidos cadastrados</p>
-              </div>
+          <v-card class="action-btn-card" variant="outlined" to="/negocios/novo">
+            <div class="text-center">
+              <div class="action-btn-label">+ Novo Negócio</div>
+              <div class="action-btn-sub">Gerencie pedidos dos clientes</div>
             </div>
           </v-card>
         </v-col>
       </v-row>
+    </v-card>
 
-      <v-card class="section-card" elevation="2">
-        <v-card-title>Ações rápidas</v-card-title>
-        <v-card-subtitle>Gerencie tarefas rapidamente</v-card-subtitle>
-        <v-card-text>
-          <v-row>
-            <v-col cols="12" md="4">
-              <v-card variant="outlined" class="action-card" @click="navigateTo('/clientes/novo')">
-                <v-card-text class="action-content">
-                  <div class="action-title">+ Novo Cliente</div>
-                  <div class="action-sub">Cadastrar clientes rapidamente</div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="4">
-              <v-card variant="outlined" class="action-card" @click="navigateTo('/produtos/novo')">
-                <v-card-text class="action-content">
-                  <div class="action-title">+ Novo Produto</div>
-                  <div class="action-sub">Gerencie itens do catálogo</div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="4">
-              <v-card variant="outlined" class="action-card" @click="navigateTo('/negocios/novo')">
-                <v-card-text class="action-content">
-                  <div class="action-title">+ Novo Negócio</div>
-                  <div class="action-sub">Gerencie pedidos dos clientes</div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-
-      <v-card class="section-card mt-6" elevation="2">
-        <v-card-title>Power BI Dashboard</v-card-title>
-        <v-card-subtitle>Aguardando integração</v-card-subtitle>
-        <v-card-text>
-          <div class="placeholder">Aguardando Power BI...</div>
-        </v-card-text>
-      </v-card>
-    </v-container>
-  </div>
-
-  <v-snackbar v-model="snackbar" color="success" timeout="2000" location="bottom right">
-    Configurações salvas com sucesso!
-  </v-snackbar>
+    <!-- Power BI Section -->
+    <v-card class="section-card" elevation="0">
+      <div class="section-header">
+        <h2 class="section-title">Power BI Dashboard</h2>
+        <p class="section-desc">Aguardando integração</p>
+      </div>
+      
+      <div class="powerbi-placeholder">
+        Aguardando Power BI...
+      </div>
+    </v-card>
+  </v-container>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, computed } from 'vue'
+import { useDisplay } from 'vuetify'
 import { useClientesStore } from '../stores/clientesStore'
 import { useProdutosStore } from '../stores/produtosStore'
 import { useNegociosStore } from '../stores/negociosStore'
 
-const router = useRouter()
-const { clientes, carregarClientes } = useClientesStore()
-const { produtos, carregarProdutos } = useProdutosStore()
-const { negocios, carregarNegocios } = useNegociosStore()
+const { mobile } = useDisplay()
+const clientesStore = useClientesStore()
+const produtosStore = useProdutosStore()
+const negociosStore = useNegociosStore()
 
-const snackbar = ref(false)
-
-const clientesCount = computed(() => clientes.value.length)
-const produtosCount = computed(() => produtos.value.length)
-const negociosCount = computed(() => negocios.value.length)
-
-const navigateTo = (path: string) => {
-  router.push(path)
-}
+const clientes = computed(() => clientesStore.clientes.value || [])
+const produtos = computed(() => produtosStore.produtos.value || [])
+const negocios = computed(() => negociosStore.negocios.value || [])
 
 onMounted(async () => {
-  await Promise.all([carregarClientes(), carregarProdutos(), carregarNegocios()])
-  const shouldShow = localStorage.getItem('crm.showSavedSnackbar') === 'true'
-  if (shouldShow) {
-    localStorage.removeItem('crm.showSavedSnackbar')
-    snackbar.value = true
-  }
+    await Promise.all([
+        clientesStore.carregarClientes(),
+        produtosStore.carregarProdutos(),
+        negociosStore.carregarNegocios()
+    ])
 })
 </script>
 
 <style scoped>
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  padding: 0;
+.stats-card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid #eef2f6; 
+  height: 100%;
 }
 
-.dashboard-content {
-  padding: 0.5rem 0;
-  flex: 1;
+/* Mobile optimizations for stats */
+@media (max-width: 600px) {
+    .stats-card {
+        padding: 1.25rem;
+    }
 }
 
-.stat-card {
-  border-radius: 16px;
+.stats-label {
+    font-size: 0.9rem;
+    color: #64748b;
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
-.stat-content {
-  padding: 1.25rem 1.5rem;
+.stats-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
 }
 
-.stat-label {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.stat-value {
-  font-size: 1.9rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
-}
-
-.stat-sub {
-  font-size: 0.85rem;
-  color: #9ca3af;
+.stats-sub {
+    font-size: 0.85rem;
+    color: #94a3b8;
 }
 
 .section-card {
-  border-radius: 16px;
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #eef2f6;
 }
 
-.action-card {
-  cursor: pointer;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+.section-header {
+    margin-bottom: 1.5rem;
 }
 
-.action-card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
 }
 
-.action-content {
-  text-align: center;
+.section-desc {
+    color: #64748b;
+    font-size: 0.85rem;
 }
 
-.action-title {
-  font-weight: 600;
-  color: #111827;
+.action-btn-card {
+    border-radius: 8px;
+    border-color: #cbd5e1;
+    padding: 1.5rem 1rem;
+    transition: all 0.2s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.action-sub {
-  font-size: 0.85rem;
-  color: #6b7280;
+.action-btn-card:hover {
+    border-color: #3b82f6;
+    background-color: #f8fafc;
 }
 
-.placeholder {
-  border: 1px dashed #d1d5db;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  color: #9ca3af;
+.action-btn-label {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.action-btn-sub {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.powerbi-placeholder {
+    height: 150px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    background-color: #f8fafc;
 }
 </style>

@@ -7,6 +7,7 @@
       </div>
       <div class="header-actions">
         <v-text-field
+          v-if="!mobile"
           v-model="search"
           label="Pesquisar"
           prepend-inner-icon="mdi-magnify"
@@ -15,13 +16,33 @@
           variant="outlined"
           class="search-field"
         />
+        <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+              <v-icon icon="mdi-magnify" />
+            </v-btn>
+          </template>
+          <v-card min-width="260" class="search-popover">
+            <v-card-text>
+              <v-text-field
+                v-model="search"
+                label="Pesquisar"
+                prepend-inner-icon="mdi-magnify"
+                density="compact"
+                hide-details
+                variant="outlined"
+                autofocus
+              />
+            </v-card-text>
+          </v-card>
+        </v-menu>
         <ColumnManagerMenu
           v-model="visibleColumns"
           :columns="columns"
           @reset="resetColumns"
           @select-all="selectAllColumns"
         />
-        <v-btn color="primary" to="/negocios/novo" class="text-none" prepend-icon="mdi-plus">
+        <v-btn color="primary" to="/negocios/novo" class="text-none action-btn" prepend-icon="mdi-plus">
           Novo Negócio
         </v-btn>
       </div>
@@ -36,7 +57,31 @@
       ></v-skeleton-loader>
 
       <template v-else>
-        <v-table class="table" v-if="filteredNegocios.length > 0">
+        <div v-if="mobile && filteredNegocios.length > 0" class="mobile-list">
+          <v-card
+            v-for="negocio in filteredNegocios"
+            :key="negocio.id"
+            class="mobile-item"
+            elevation="1"
+            @click="irParaNegocio(negocio.id)"
+          >
+            <div class="mobile-item-head">
+              <div>
+                <p class="mobile-code">#{{ String(negocio.codigo).padStart(3, '0') }}</p>
+                <h3 class="mobile-name">{{ negocio.cliente?.nome || 'N/A' }}</h3>
+              </div>
+              <strong class="mobile-money">{{ formatCurrency(negocio.valorFinal) }}</strong>
+            </div>
+            <p class="mobile-meta">Venda: {{ formatarData(negocio.dataVenda as string) }}</p>
+            <p class="mobile-meta">{{ itensHeader }}: {{ negocio.produtos?.length || 0 }}</p>
+            <div class="mobile-actions">
+              <v-btn size="small" variant="tonal" color="primary" @click.stop="irParaEdicao(negocio.id)">Editar</v-btn>
+              <v-btn size="small" variant="tonal" color="error" @click.stop="abrirConfirmacaoExcluir(negocio.id)">Excluir</v-btn>
+            </div>
+          </v-card>
+        </div>
+
+        <v-table class="table" v-else-if="filteredNegocios.length > 0">
           <thead>
             <tr>
               <th v-if="isColumnVisible('codigo')">Código</th>
@@ -52,7 +97,7 @@
           </thead>
           <tbody>
             <tr
-              v-for="negocio in filteredNegocios"
+              v-for="negocio in paginatedNegocios"
               :key="negocio.id"
               class="clickable-row"
               role="button"
@@ -84,7 +129,42 @@
               </td>
             </tr>
           </tbody>
-        </v-table>
+          </v-table>
+
+          <div v-if="filteredNegocios.length > 0" class="d-flex align-center justify-end px-4 py-2 border-t text-body-2">
+            <div class="d-flex align-center mr-4">
+              <span class="text-grey-darken-1 mr-2">Itens por página:</span>
+              <v-select
+                v-model="itemsPerPage"
+                :items="[10, 25, 50, 100]"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="items-per-page-select"
+              />
+            </div>
+            
+            <span class="text-grey-darken-1 mr-4">
+              {{ paginationText }}
+            </span>
+
+            <div class="d-flex align-center">
+              <v-btn
+                icon="mdi-chevron-left"
+                variant="text"
+                density="comfortable"
+                :disabled="page === 1"
+                @click="page--"
+              />
+              <v-btn
+                icon="mdi-chevron-right"
+                variant="text"
+                density="comfortable"
+                :disabled="page * itemsPerPage >= filteredNegocios.length"
+                @click="page++"
+              />
+            </div>
+          </div>
 
         <div v-if="filteredNegocios.length === 0" class="empty-state">
           <v-icon icon="mdi-handshake" size="64" color="grey-lighten-1" class="mb-4" />
@@ -118,16 +198,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useNegociosStore } from '../../stores/negociosStore'
 import { useModulesStore } from '../../stores/modulesStore'
 import ColumnManagerMenu from '../../components/common/ColumnManagerMenu.vue'
 import { useColumnManager } from '../../composables/useColumnManager'
 
 const router = useRouter()
+const { mobile } = useDisplay()
 const negociosStore = useNegociosStore()
 const { negocios, carregarNegocios, deletarNegocio, carregando } = negociosStore
 const modulesStore = useModulesStore()
 const search = ref('')
+const searchMenu = ref(false)
 
 const {
   columns,
@@ -168,6 +251,23 @@ const filteredNegocios = computed(() => {
 
     return text.includes(term)
   })
+})
+
+const page = ref(1)
+const itemsPerPage = ref(10)
+
+const paginatedNegocios = computed(() => {
+  const start = (page.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredNegocios.value.slice(start, end)
+})
+
+const paginationText = computed(() => {
+  const total = filteredNegocios.value.length
+  if (total === 0) return '0-0 de 0'
+  const start = (page.value - 1) * itemsPerPage.value + 1
+  const end = Math.min(page.value * itemsPerPage.value, total)
+  return `${start}-${end} de ${total}`
 })
 
 const confirmarExcluir = ref(false)
@@ -236,7 +336,7 @@ onMounted(() => {
 }
 
 .search-field {
-  width: 240px;
+  width: 300px;
 }
 
 .page-header h2 {
@@ -254,6 +354,58 @@ onMounted(() => {
   border-radius: 16px;
 }
 
+.search-popover {
+  border-radius: 12px;
+}
+
+.mobile-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.mobile-item {
+  border-radius: 14px;
+  padding: 0.85rem;
+  border: 1px solid #d7e3f5;
+}
+
+.mobile-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.mobile-code {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #667a96;
+}
+
+.mobile-name {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+  color: #173a66;
+}
+
+.mobile-money {
+  color: #10335e;
+  font-size: 0.95rem;
+}
+
+.mobile-meta {
+  margin: 0.32rem 0 0;
+  color: #4e6482;
+  font-size: 0.87rem;
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
 .clickable-row {
   cursor: pointer;
 }
@@ -265,5 +417,43 @@ onMounted(() => {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
+}
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+    align-items: center;
+  }
+
+  .header-actions :deep(.v-btn),
+  .header-actions :deep(.v-menu),
+  .header-actions :deep(.column-manager-menu) {
+    flex-shrink: 0;
+  }
+
+  .header-actions .action-btn {
+    min-width: max-content;
+  }
+}
+
+.items-per-page-select {
+  width: 80px;
+}
+
+.items-per-page-select :deep(.v-field__input) {
+  min-height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.border-t {
+  border-top: 1px solid #e0e0e0;
 }
 </style>

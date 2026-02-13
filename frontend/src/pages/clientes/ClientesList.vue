@@ -1,12 +1,30 @@
 ﻿<template>
   <v-container fluid class="page">
     <div class="page-header">
-      <div>
-        <h2>Clientes</h2>
-        <p class="subtitle">Gerencie seus clientes cadastrados</p>
+      <div class="header-left-group">
+        <div>
+          <h2>Clientes</h2>
+          <p class="subtitle">Gerencie seus clientes cadastrados</p>
+        </div>
+        <div v-if="mobile" class="mobile-top-actions">
+          <v-btn color="primary" to="/clientes/novo" class="text-none mb-2" block flat>+ Novo Cliente</v-btn>
+          <v-btn
+            variant="flat"
+            color="success"
+            prepend-icon="mdi-file-excel"
+            :loading="importandoCsv"
+            class="text-none"
+            block
+            flat
+            @click="abrirImportadorCsv"
+          >
+            Importar CSV
+          </v-btn>
+        </div>
       </div>
       <div class="header-actions">
         <v-text-field
+          v-if="!mobile"
           v-model="search"
           label="Pesquisar"
           prepend-inner-icon="mdi-magnify"
@@ -15,16 +33,45 @@
           variant="outlined"
           class="search-field"
         />
+        <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+              <v-icon icon="mdi-magnify" />
+            </v-btn>
+          </template>
+          <v-card min-width="260" class="search-popover">
+            <v-card-text>
+              <v-text-field
+                v-model="search"
+                label="Pesquisar"
+                prepend-inner-icon="mdi-magnify"
+                density="compact"
+                hide-details
+                variant="outlined"
+                autofocus
+              />
+            </v-card-text>
+          </v-card>
+        </v-menu>
         <ColumnManagerMenu
           v-model="visibleColumns"
           :columns="columns"
           @reset="resetColumns"
           @select-all="selectAllColumns"
         />
-        <v-btn variant="tonal" color="primary" prepend-icon="mdi-file-delimited" :loading="importandoCsv" @click="abrirImportadorCsv">
-          Importar CSV
-        </v-btn>
-        <v-btn color="primary" to="/clientes/novo" class="text-none">+ Novo Cliente</v-btn>
+        <template v-if="!mobile">
+          <v-btn
+            variant="flat"
+            color="success"
+            prepend-icon="mdi-file-excel"
+            :loading="importandoCsv"
+            class="text-none action-btn"
+            @click="abrirImportadorCsv"
+          >
+            Importar CSV
+          </v-btn>
+          <v-btn color="primary" to="/clientes/novo" class="text-none action-btn">+ Novo Cliente</v-btn>
+        </template>
       </div>
     </div>
 
@@ -45,7 +92,41 @@
         ></v-skeleton-loader>
 
         <template v-else>
-          <v-table class="table" v-if="filteredClientes.length > 0">
+          <div v-if="mobile && filteredClientes.length > 0" class="mobile-list">
+            <v-card
+              v-for="cliente in filteredClientes"
+              :key="cliente.id"
+              class="mobile-item"
+              elevation="1"
+              @click="irParaCliente(cliente.id)"
+            >
+              <div class="mobile-item-head">
+                <div>
+                  <p class="mobile-code">#{{ cliente.codigo !== undefined && cliente.codigo !== null ? String(cliente.codigo).padStart(3, '0') : '---' }}</p>
+                  <h3 class="mobile-name">{{ cliente.nome }}</h3>
+                </div>
+                <v-chip :color="cliente.isAtivo ? 'blue' : 'grey-lighten-2'" size="small" variant="flat">
+                  {{ cliente.isAtivo ? 'Ativo' : 'Inativo' }}
+                </v-chip>
+              </div>
+              <p class="mobile-meta">{{ cliente.email || '-' }}</p>
+              <p class="mobile-meta">{{ formatTelefone(cliente.telefone) || '-' }}</p>
+              <div class="mobile-actions">
+                <v-btn size="small" variant="tonal" color="primary" @click.stop="irParaEdicao(cliente.id)">Editar</v-btn>
+                <v-btn
+                  size="small"
+                  variant="tonal"
+                  :color="cliente.isAtivo ? 'warning' : 'success'"
+                  @click.stop="abrirConfirmacaoStatus(cliente.id, cliente.isAtivo)"
+                >
+                  {{ cliente.isAtivo ? 'Inativar' : 'Ativar' }}
+                </v-btn>
+                <v-btn size="small" variant="tonal" color="error" @click.stop="abrirConfirmacaoExcluir(cliente.id)">Excluir</v-btn>
+              </div>
+            </v-card>
+          </div>
+
+          <v-table class="table" v-else-if="filteredClientes.length > 0">
             <thead>
               <tr>
                 <th v-if="isColumnVisible('codigo')">Código</th>
@@ -65,7 +146,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="cliente in filteredClientes"
+                v-for="cliente in paginatedClientes"
                 :key="cliente.id"
                 class="clickable-row"
                 role="button"
@@ -128,6 +209,41 @@
             </tbody>
           </v-table>
 
+          <div v-if="filteredClientes.length > 0" class="d-flex align-center justify-end px-4 py-2 border-t text-body-2">
+            <div class="d-flex align-center mr-4">
+              <span class="text-grey-darken-1 mr-2">Itens por página:</span>
+              <v-select
+                v-model="itemsPerPage"
+                :items="[10, 25, 50, 100]"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="items-per-page-select"
+              />
+            </div>
+            
+            <span class="text-grey-darken-1 mr-4">
+              {{ paginationText }}
+            </span>
+
+            <div class="d-flex align-center">
+              <v-btn
+                icon="mdi-chevron-left"
+                variant="text"
+                density="comfortable"
+                :disabled="page === 1"
+                @click="page--"
+              />
+              <v-btn
+                icon="mdi-chevron-right"
+                variant="text"
+                density="comfortable"
+                :disabled="page * itemsPerPage >= filteredClientes.length"
+                @click="page++"
+              />
+            </div>
+          </div>
+
           <div v-if="filteredClientes.length === 0" class="empty-state">
             <v-icon icon="mdi-account-group" size="64" color="grey-lighten-1" class="mb-4" />
             <p class="text-h6 text-grey-darken-1 mb-2">Você ainda não tem Clientes</p>
@@ -179,6 +295,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useClientesStore } from '../../stores/clientesStore'
 import { formatTelefone } from '../../utils/formatters'
 import { PESSOA_TIPO_OPTIONS, PessoaTipoEnum } from '../../types/enums/pessoa-tipo.enum'
@@ -187,8 +304,10 @@ import { useColumnManager } from '../../composables/useColumnManager'
 import { notificationsStore } from '../../stores/notificationsStore'
 
 const router = useRouter()
+const { mobile } = useDisplay()
 const { clientes, carregarClientes, deletarCliente, atualizarCliente, adicionarCliente, carregando } = useClientesStore()
 const search = ref('')
+const searchMenu = ref(false)
 const csvInputRef = ref<HTMLInputElement | null>(null)
 const importandoCsv = ref(false)
 
@@ -237,6 +356,23 @@ const filteredClientes = computed(() => {
 
     return text.includes(term)
   })
+})
+
+const page = ref(1)
+const itemsPerPage = ref(10)
+
+const paginatedClientes = computed(() => {
+  const start = (page.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredClientes.value.slice(start, end)
+})
+
+const paginationText = computed(() => {
+  const total = filteredClientes.value.length
+  if (total === 0) return '0-0 de 0'
+  const start = (page.value - 1) * itemsPerPage.value + 1
+  const end = Math.min(page.value * itemsPerPage.value, total)
+  return `${start}-${end} de ${total}`
 })
 
 const confirmarExcluir = ref(false)
@@ -455,11 +591,15 @@ onMounted(() => {
 }
 
 .search-field {
-  width: 240px;
+  width: 300px;
 }
 
 .hidden-input {
   display: none;
+}
+
+.search-popover {
+  border-radius: 12px;
 }
 
 .page-header h2 {
@@ -477,6 +617,50 @@ onMounted(() => {
   border-radius: 16px;
 }
 
+.mobile-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.mobile-item {
+  border-radius: 14px;
+  padding: 0.85rem;
+  border: 1px solid #d7e3f5;
+}
+
+.mobile-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.mobile-code {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #667a96;
+}
+
+.mobile-name {
+  margin: 0.15rem 0 0;
+  font-size: 1.04rem;
+  color: #173a66;
+  line-height: 1.2;
+}
+
+.mobile-meta {
+  margin: 0.32rem 0 0;
+  color: #4e6482;
+  font-size: 0.87rem;
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
 .clickable-row {
   cursor: pointer;
 }
@@ -488,5 +672,60 @@ onMounted(() => {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
+}
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .header-left-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-top-actions {
+    display: flex;
+    flex-direction: column;
+    width: 160px;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+
+  .header-actions {
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+  }
+
+  .header-actions :deep(.v-btn),
+  .header-actions :deep(.v-menu),
+  .header-actions :deep(.column-manager-menu) {
+    flex-shrink: 0;
+  }
+
+  .header-actions .action-btn {
+    min-width: max-content;
+  }
+}
+
+.items-per-page-select {
+  width: 80px;
+}
+
+.items-per-page-select :deep(.v-field__input) {
+  min-height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.border-t {
+  border-top: 1px solid #e0e0e0;
 }
 </style>

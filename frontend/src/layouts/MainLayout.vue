@@ -1,6 +1,12 @@
 ﻿<template>
   <v-layout class="layout">
-    <v-navigation-drawer permanent width="232" class="sidebar">
+    <v-navigation-drawer
+      v-model="drawer"
+      :permanent="!mobile"
+      :temporary="mobile"
+      :width="mobile ? 296 : 232"
+      class="sidebar"
+    >
       <div class="brand">
         <div class="brand-logo-container">
           <img
@@ -58,7 +64,23 @@
     <v-main class="main">
       <div class="top-shell">
         <div class="top-row">
-          <Breadcrumbs />
+          <v-btn v-if="mobile" icon="mdi-menu" variant="text" class="mr-2" @click="drawer = !drawer" />
+          <RouterLink v-if="mobile" to="/" class="top-brand" aria-label="Ir para Home">
+            <div class="top-brand-logo">
+              <img
+                v-if="branding.logoUrl"
+                :src="branding.logoUrl"
+                alt="Logo"
+                class="top-brand-logo-img"
+                :style="{ transform: `translate(${branding.logoOffsetX || 0}px, ${branding.logoOffsetY || 0}px) scale(${branding.logoScale / 100})` }"
+              />
+              <v-icon v-else icon="mdi-domain" size="16" />
+            </div>
+            <span class="top-brand-text">{{ branding.nomeCRM || 'CRM' }}</span>
+          </RouterLink>
+          <div v-if="!mobile" class="breadcrumbs-wrap">
+            <Breadcrumbs />
+          </div>
         </div>
         <div class="user-area">
           <v-menu location="bottom end">
@@ -117,8 +139,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useRouter, RouterView } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { useBrandingStore } from '../stores/brandingStore'
 import { useAuthStore } from '../stores/authStore'
@@ -126,9 +149,24 @@ import { useModulesStore } from '../stores/modulesStore'
 import { notificationsStore } from '../stores/notificationsStore'
 
 const router = useRouter()
+const route = useRoute()
 const { branding } = useBrandingStore()
 const authStore = useAuthStore()
 const modulesStore = useModulesStore()
+
+const { mobile } = useDisplay()
+const drawer = ref(!mobile.value)
+
+watch(mobile, (val) => {
+  drawer.value = !val
+})
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (mobile.value) drawer.value = false
+  },
+)
 
 onMounted(() => {
   modulesStore.fetchConfig()
@@ -271,10 +309,56 @@ function handleLogout() {
 .top-row {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   min-height: 40px;
   width: 100%;
   max-width: 1520px;
   margin: 0 auto;
+}
+
+.top-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.top-brand-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid rgba(34, 84, 145, 0.2);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: #1f4f87;
+}
+
+.top-brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center;
+}
+
+.top-brand-text {
+  color: #1d3f6c;
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.breadcrumbs-wrap {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .user-area {
@@ -352,6 +436,52 @@ function handleLogout() {
 
   .user-area {
     right: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-shell {
+    padding: 0.35rem 3.8rem 0.35rem 0.75rem;
+  }
+
+  .top-row {
+    min-height: 34px;
+    gap: 0.5rem;
+  }
+
+  .top-brand-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .top-brand-text {
+    font-size: 0.9rem;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .content {
+    padding: 0.7rem 0.6rem 1rem;
+  }
+
+  .user-area {
+    right: 0.6rem;
+    top: 4px;
+  }
+
+  .global-footer {
+    padding: 0.35rem 0.5rem;
+  }
+
+  .footer-company {
+    font-size: 0.72rem;
+  }
+
+  .footer-logo {
+    width: 22px;
+    height: 22px;
   }
 }
 </style>

@@ -33,12 +33,11 @@ export const useAuthStore = defineStore('auth', () => {
                 body: JSON.stringify({ email, password }),
             })
 
+            const data = await response.json().catch(() => ({}))
             if (!response.ok) {
-                console.error('Login failed:', response.statusText)
-                return false
+                const message = data?.message || 'Falha no login'
+                throw new Error(message)
             }
-
-            const data = await response.json()
             if (data.access_token) {
                 token.value = data.access_token
                 user.value = data.user || { email } // Fallback if user not in response
@@ -47,8 +46,59 @@ export const useAuthStore = defineStore('auth', () => {
             return false
         } catch (error) {
             console.error('Login error:', error)
-            return false
+            throw error
         }
+    }
+
+    async function register(name: string, email: string, password: string): Promise<string> {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const response = await fetch(`${apiUrl}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, password }),
+        })
+
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+            throw new Error(data?.message || 'Nao foi possivel registrar usuario')
+        }
+        return data?.message || 'Cadastro enviado com sucesso'
+    }
+
+    async function forgotPassword(email: string): Promise<string> {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const response = await fetch(`${apiUrl}/auth/forgot-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        })
+
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+            throw new Error(data?.message || 'Nao foi possivel enviar email de recuperacao')
+        }
+        return data?.message || 'Se o email existir, enviaremos o link de recuperacao'
+    }
+
+    async function resetPassword(tokenValue: string, password: string): Promise<string> {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const response = await fetch(`${apiUrl}/auth/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token: tokenValue, password }),
+        })
+
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+            throw new Error(data?.message || 'Nao foi possivel redefinir senha')
+        }
+        return data?.message || 'Senha redefinida com sucesso'
     }
 
     function logout() {
@@ -56,7 +106,18 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = null
     }
 
-    return { user, token, isAuthenticated, setToken, setUser, login, logout }
+    return {
+        user,
+        token,
+        isAuthenticated,
+        setToken,
+        setUser,
+        login,
+        register,
+        forgotPassword,
+        resetPassword,
+        logout
+    }
 }, {
     persist: true
 })

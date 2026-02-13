@@ -1,12 +1,13 @@
 <template>
   <v-container fluid class="page">
     <div class="page-header">
-      <div>
+      <div class="title-wrap">
         <h2>{{ $t('menu.contas_receber') }}</h2>
         <p class="subtitle">Gerencie suas contas a receber cadastradas</p>
       </div>
       <div class="header-actions">
         <v-text-field
+          v-if="!mobile"
           v-model="search"
           label="Pesquisar"
           prepend-inner-icon="mdi-magnify"
@@ -15,13 +16,33 @@
           variant="outlined"
           class="search-field"
         />
+        <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+              <v-icon icon="mdi-magnify" />
+            </v-btn>
+          </template>
+          <v-card min-width="260" class="search-popover">
+            <v-card-text>
+              <v-text-field
+                v-model="search"
+                label="Pesquisar"
+                prepend-inner-icon="mdi-magnify"
+                density="compact"
+                hide-details
+                variant="outlined"
+                autofocus
+              />
+            </v-card-text>
+          </v-card>
+        </v-menu>
         <ColumnManagerMenu
           v-model="visibleColumns"
           :columns="columns"
           @reset="resetColumns"
           @select-all="selectAllColumns"
         />
-        <v-btn color="primary" @click="openNew">+ NOVA CONTA</v-btn>
+        <v-btn color="primary" @click="openNew" class="text-none action-btn">+ NOVA CONTA</v-btn>
       </div>
     </div>
 
@@ -34,8 +55,48 @@
         ></v-skeleton-loader>
 
         <template v-else>
+          <div v-if="mobile && filteredItems.length > 0" class="mobile-list">
+            <v-card v-for="item in filteredItems" :key="item.id" class="mobile-item" elevation="1">
+              <div class="mobile-item-head">
+                <h3 class="mobile-name">{{ item.descricao }}</h3>
+                <v-chip :color="getStatusColor(item.status)" size="small">{{ item.status }}</v-chip>
+              </div>
+              <div class="mobile-item-grid">
+                <div>
+                  <p class="mobile-label">Cliente</p>
+                  <p class="mobile-value">{{ item.cliente?.nome || '-' }}</p>
+                </div>
+                <div>
+                  <p class="mobile-label">Valor</p>
+                  <p class="mobile-value">{{ formatCurrency(item.valor) }}</p>
+                </div>
+                <div>
+                  <p class="mobile-label">Vencimento</p>
+                  <p class="mobile-value">{{ formatDate(item.dtVencimento) }}</p>
+                </div>
+                <div>
+                  <p class="mobile-label">Recebimento</p>
+                  <p class="mobile-value">{{ formatDate(item.dtRecebimento) }}</p>
+                </div>
+              </div>
+              <div class="mobile-actions">
+                <v-btn size="small" color="warning" variant="tonal" @click="openEdit(item)">Editar</v-btn>
+                <v-btn
+                  v-if="item.status === 'PENDENTE'"
+                  size="small"
+                  color="success"
+                  variant="tonal"
+                  @click="markAsReceived(item)"
+                >
+                  Receber
+                </v-btn>
+                <v-btn size="small" color="info" variant="tonal" @click="notify(item)">Notificar</v-btn>
+              </div>
+            </v-card>
+          </div>
+
           <v-data-table
-            v-if="filteredItems.length > 0"
+            v-else-if="filteredItems.length > 0"
             :headers="headers"
             :items="filteredItems"
             no-data-text="Nenhum registro encontrado"
@@ -159,12 +220,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
 import { useFinanceiroStore } from '../../stores/financeiroStore'
 import { useClientesStore } from '../../stores/clientesStore'
 import ColumnManagerMenu from '../../components/common/ColumnManagerMenu.vue'
 import { useColumnManager } from '../../composables/useColumnManager'
 
 const { t } = useI18n()
+const { mobile } = useDisplay()
 const store = useFinanceiroStore()
 const clientesStore = useClientesStore()
 const dialog = ref(false)
@@ -174,6 +237,7 @@ const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
 const search = ref('')
+const searchMenu = ref(false)
 
 const confirmDialog = ref(false)
 const confirmTitle = ref('')
@@ -366,9 +430,13 @@ watch(() => store.error, (newVal) => {
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1.5rem;
   gap: 1rem;
+}
+
+.title-wrap {
+  min-width: 0;
 }
 
 .page-header h2 {
@@ -396,6 +464,62 @@ watch(() => store.error, (newVal) => {
   border-radius: 16px;
 }
 
+.search-popover {
+  border-radius: 12px;
+}
+
+.mobile-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.mobile-item {
+  border-radius: 14px;
+  border: 1px solid #d7e3f5;
+  padding: 0.9rem;
+}
+
+.mobile-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.mobile-name {
+  margin: 0;
+  font-size: 1rem;
+  color: #193a66;
+}
+
+.mobile-item-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+.mobile-label {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #6b7f9a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mobile-value {
+  margin: 0.12rem 0 0;
+  font-weight: 600;
+  color: #223b5b;
+}
+
+.mobile-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -403,5 +527,41 @@ watch(() => store.error, (newVal) => {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .title-wrap {
+    flex: 1 1 auto;
+  }
+
+  .page-header h2 {
+    font-size: clamp(1.45rem, 7vw, 2rem);
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .header-actions {
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+  }
+
+  .header-actions :deep(.v-btn),
+  .header-actions :deep(.v-menu),
+  .header-actions :deep(.column-manager-menu) {
+    flex-shrink: 0;
+  }
+
+  .header-actions .action-btn {
+    min-width: max-content;
+  }
 }
 </style>

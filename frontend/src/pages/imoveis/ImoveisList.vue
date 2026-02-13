@@ -1,12 +1,13 @@
 ﻿<template>
   <v-container fluid class="page">
-    <v-row class="page-header" align="start">
-      <v-col>
+    <div class="page-header">
+      <div>
         <h2 class="page-title">Empreendimentos</h2>
         <p class="summary-text">{{ empreendimentos.length }} empreendimentos cadastrados</p>
-      </v-col>
-      <v-col class="text-right header-actions">
+      </div>
+      <div class="header-actions">
         <v-text-field
+          v-if="!mobile"
           v-model="search"
           label="Pesquisar"
           prepend-inner-icon="mdi-magnify"
@@ -15,18 +16,38 @@
           variant="outlined"
           class="search-field"
         />
+        <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+              <v-icon icon="mdi-magnify" />
+            </v-btn>
+          </template>
+          <v-card min-width="260" class="search-popover">
+            <v-card-text>
+              <v-text-field
+                v-model="search"
+                label="Pesquisar"
+                prepend-inner-icon="mdi-magnify"
+                density="compact"
+                hide-details
+                variant="outlined"
+                autofocus
+              />
+            </v-card-text>
+          </v-card>
+        </v-menu>
         <ColumnManagerMenu
           v-model="visibleColumns"
           :columns="columns"
           @reset="resetColumns"
           @select-all="selectAllColumns"
         />
-        <v-btn color="primary" to="/imoveis/novo" class="text-none">
+        <v-btn color="primary" to="/imoveis/novo" class="text-none action-btn">
           <v-icon start icon="mdi-plus"></v-icon>
           Novo Empreendimento
         </v-btn>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
 
     <v-card elevation="2" class="table-card">
       <v-skeleton-loader
@@ -36,12 +57,38 @@
       ></v-skeleton-loader>
 
       <template v-else>
+        <div v-if="mobile && filteredEmpreendimentos.length > 0" class="mobile-list">
+          <v-card
+            v-for="item in filteredEmpreendimentos"
+            :key="item.id"
+            class="mobile-item"
+            elevation="1"
+            @click="abrirEmpreendimento(item.id)"
+          >
+            <div class="mobile-item-head">
+              <h3 class="mobile-name">{{ item.nome }}</h3>
+              <v-chip :color="statusColor(item.status)" label size="small">
+                {{ formatStatus(item.status) }}
+              </v-chip>
+            </div>
+            <p class="mobile-meta">{{ item.enderecoBairro ? `${item.enderecoBairro}, ${item.enderecoCidade}` : '-' }}</p>
+            <p class="mobile-meta">Previsão: {{ item.previsaoEntrega ? formatDate(item.previsaoEntrega) : 'Não informada' }}</p>
+            <p class="mobile-meta">Unidades: {{ item.unidades?.length || 0 }}</p>
+            <div class="mobile-actions">
+              <v-btn size="small" variant="tonal" color="primary" @click.stop="editarEmpreendimento(item.id)">Editar</v-btn>
+              <v-btn size="small" variant="tonal" color="error" @click.stop="store.deleteEmpreendimento(item.id)">Excluir</v-btn>
+            </div>
+          </v-card>
+        </div>
+
         <v-data-table
-          v-if="filteredEmpreendimentos.length > 0"
+          v-else-if="filteredEmpreendimentos.length > 0"
           :headers="headers"
           :items="filteredEmpreendimentos"
           density="comfortable"
           :row-props="() => ({ class: 'clickable-row' })"
+          items-per-page-text="Itens por página:"
+          page-text="{0}-{1} de {2}"
           @click:row="onClickRow"
         >
           <template #item.status="{ item }">
@@ -90,14 +137,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useImoveisStore } from '../../stores/imoveisStore'
 import ColumnManagerMenu from '../../components/common/ColumnManagerMenu.vue'
 import { useColumnManager } from '../../composables/useColumnManager'
 
 const store = useImoveisStore()
 const router = useRouter()
+const { mobile } = useDisplay()
 const empreendimentos = computed(() => store.empreendimentos)
 const search = ref('')
+const searchMenu = ref(false)
 
 const allHeaders = [
   { title: 'Nome', key: 'nome' },
@@ -205,7 +255,11 @@ onMounted(() => {
 }
 
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 1.5rem;
+  gap: 1rem;
 }
 
 .page-title {
@@ -220,18 +274,58 @@ onMounted(() => {
 
 .header-actions {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .search-field {
-  width: 240px;
+  width: 300px;
+}
+
+.search-popover {
+  border-radius: 12px;
 }
 
 .table-card {
   border-radius: 16px;
   overflow: hidden;
+}
+
+.mobile-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.mobile-item {
+  border-radius: 14px;
+  padding: 0.85rem;
+  border: 1px solid #d7e3f5;
+}
+
+.mobile-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.mobile-name {
+  margin: 0;
+  font-size: 1rem;
+  color: #173a66;
+}
+
+.mobile-meta {
+  margin: 0.32rem 0 0;
+  color: #4e6482;
+  font-size: 0.87rem;
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
 }
 
 :deep(.clickable-row) {
@@ -245,5 +339,29 @@ onMounted(() => {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
+}
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+    align-items: center;
+  }
+
+  .header-actions :deep(.v-btn),
+  .header-actions :deep(.v-menu),
+  .header-actions :deep(.column-manager-menu) {
+    flex-shrink: 0;
+  }
+
+  .header-actions .action-btn {
+    min-width: max-content;
+  }
 }
 </style>

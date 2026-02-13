@@ -1,18 +1,71 @@
 ﻿<template>
   <v-container fluid class="page">
-    <v-row class="page-header">
-      <v-col>
+    <div class="page-header">
+      <div class="title-row">
         <h2 class="page-title">Funil de Vendas (Leads)</h2>
-      </v-col>
-      <v-col class="text-right">
-        <v-btn color="primary" prepend-icon="mdi-plus" to="/clientes/novo">
+      </div>
+      <div class="filter-row">
+        <v-text-field
+          v-if="!mobile"
+          v-model="search"
+          label="Pesquisar"
+          prepend-inner-icon="mdi-magnify"
+          density="compact"
+          hide-details
+          variant="outlined"
+          class="search-field"
+        />
+        <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+              <v-icon icon="mdi-magnify" />
+            </v-btn>
+          </template>
+          <v-card min-width="260" class="search-popover">
+            <v-card-text>
+              <v-text-field
+                v-model="search"
+                label="Pesquisar"
+                prepend-inner-icon="mdi-magnify"
+                density="compact"
+                hide-details
+                variant="outlined"
+                autofocus
+              />
+            </v-card-text>
+          </v-card>
+        </v-menu>
+        <ColumnManagerMenu
+          v-model="visibleStageIds"
+          :columns="availableStages"
+          @reset="resetStages"
+          @select-all="selectAllStages"
+        />
+        <v-btn color="primary" prepend-icon="mdi-plus" to="/clientes/novo" class="text-none">
           Novo Lead
         </v-btn>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
+
+    <div class="funnel-summary">
+      <div
+        v-for="stage in stages"
+        :key="stage.id"
+        class="summary-chip"
+        @click="scrollToStage(stage.id)"
+      >
+        <span>{{ stage.title }}</span>
+        <strong>{{ getLeadsInStage(stage.id).length }}</strong>
+      </div>
+    </div>
 
     <div class="kanban-container">
-      <div v-for="stage in stages" :key="stage.id" class="kanban-column">
+      <div
+        v-for="stage in stages"
+        :key="stage.id"
+        :ref="(el) => setColumnRef(el, stage.id)"
+        class="kanban-column"
+      >
         <v-card
           class="column-card"
           :class="{ 'drop-target': overStageId === stage.id }"
@@ -71,29 +124,57 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useClientesStore } from '../../stores/clientesStore'
+import ColumnManagerMenu from '../../components/common/ColumnManagerMenu.vue'
 
 const router = useRouter()
+const { mobile } = useDisplay()
 const store = useClientesStore()
 
 const draggedLeadId = ref<string | null>(null)
 const overStageId = ref<string | null>(null)
 const suppressClick = ref(false)
+const search = ref('')
+const searchMenu = ref(false)
 
-const stages = [
-  { id: 'NOVO', title: 'Novo Lead' },
-  { id: 'CONTATO', title: 'Contato' },
-  { id: 'VISITA', title: 'Agendamento/Visita' },
-  { id: 'PROPOSTA', title: 'Proposta' },
-  { id: 'RESERVA', title: 'Reserva' },
-  { id: 'CONTRATO', title: 'Em Contrato' },
-  { id: 'GANHO', title: 'Venda Concluída' },
+const allStages = [
+  { id: 'NOVO', title: 'Novo Lead', key: 'NOVO', label: 'Novo Lead' },
+  { id: 'CONTATO', title: 'Contato', key: 'CONTATO', label: 'Contato' },
+  { id: 'VISITA', title: 'Agendamento/Visita', key: 'VISITA', label: 'Agendamento/Visita' },
+  { id: 'PROPOSTA', title: 'Proposta', key: 'PROPOSTA', label: 'Proposta' },
+  { id: 'RESERVA', title: 'Reserva', key: 'RESERVA', label: 'Reserva' },
+  { id: 'CONTRATO', title: 'Em Contrato', key: 'CONTRATO', label: 'Em Contrato' },
+  { id: 'GANHO', title: 'Venda Concluída', key: 'GANHO', label: 'Venda Concluída' },
 ]
 
+const visibleStageIds = ref<string[]>(allStages.map(s => s.id))
+const availableStages = computed(() => allStages.map(s => ({ ...s, locked: false })))
+
+const stages = computed(() => allStages.filter(s => visibleStageIds.value.includes(s.id)))
+
+const resetStages = () => {
+  visibleStageIds.value = allStages.map(s => s.id)
+}
+
+const selectAllStages = () => {
+  visibleStageIds.value = allStages.map(s => s.id)
+}
+
 const getLeadsInStage = (stageId: string) => {
-  return store.clientes.value.filter((c) => (c.pipelineStage || 'NOVO') === stageId)
+  let items = store.clientes.value.filter((c) => (c.pipelineStage || 'NOVO') === stageId)
+  if (search.value) {
+    const s = search.value.toLowerCase()
+    items = items.filter(
+      (c) =>
+        c.nome.toLowerCase().includes(s) ||
+        (c.email && c.email.toLowerCase().includes(s)) ||
+        (c.telefone && c.telefone.includes(s))
+    )
+  }
+  return items
 }
 
 const getTemperaturaColor = (temp?: string) => {
@@ -171,6 +252,19 @@ const verDetalhes = (id: string) => {
   router.push(`/clientes/${id}`)
 }
 
+const columnRefs = ref<Record<string, HTMLElement>>({})
+
+const setColumnRef = (el: any, id: string) => {
+  if (el) columnRefs.value[id] = el as HTMLElement
+}
+
+const scrollToStage = (stageId: string) => {
+  const el = columnRefs.value[stageId]
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }
+}
+
 onMounted(() => {
   store.carregarClientes()
 })
@@ -182,7 +276,31 @@ onMounted(() => {
 }
 
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.search-field {
+  width: 240px;
+}
+
+.search-popover {
+  border-radius: 12px;
 }
 
 .page-title {
@@ -190,17 +308,57 @@ onMounted(() => {
   color: #111827;
 }
 
+.funnel-summary {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.summary-chip {
+  flex: 0 0 auto;
+  border: 1px solid #cfdef1;
+  border-radius: 999px;
+  background: #f7fbff;
+  color: #28476e;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.77rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.summary-chip:hover {
+  background: #eef5ff;
+  border-color: #3b82f6;
+}
+
+.summary-chip strong {
+  background: #1e5ca9;
+  color: #fff;
+  border-radius: 999px;
+  min-width: 20px;
+  text-align: center;
+  padding: 0.08rem 0.35rem;
+  font-size: 0.72rem;
+}
+
 .kanban-container {
   display: flex;
   overflow-x: auto;
   gap: 1rem;
   padding-bottom: 1rem;
-  min-height: calc(100vh - 200px);
+  min-height: calc(100vh - 240px);
+  scroll-snap-type: x mandatory;
 }
 
 .kanban-column {
-  flex: 0 0 280px;
-  min-width: 280px;
+  flex: 0 0 320px;
+  min-width: 320px;
+  scroll-snap-align: start;
 }
 
 .column-card {
@@ -235,5 +393,43 @@ onMounted(() => {
 
 .clickable {
   cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    margin-bottom: 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  .title-row {
+    justify-content: space-between;
+  }
+
+  .filter-row {
+    width: 100%;
+    justify-content: start;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+  }
+  
+  .search-field {
+    width: 100%;
+  }
+
+  .kanban-container {
+    gap: 0.6rem;
+    min-height: calc(100vh - 215px);
+  }
+
+  .kanban-column {
+    flex-basis: 86vw;
+    min-width: 86vw;
+  }
+
+  .leads-list {
+    max-height: calc(100vh - 305px);
+  }
 }
 </style>

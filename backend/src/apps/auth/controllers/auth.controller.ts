@@ -1,7 +1,7 @@
-import { Controller, Request, Post, UseGuards, Get, Body } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../services/auth.service';
-import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -19,14 +19,16 @@ export class AuthController {
             },
         },
     })
-    async login(@Body() req) {
+    async login(@Body() req: { email?: string; password?: string }) {
         if (!req.email || !req.password) {
-            return { message: 'Email and password are required' };
+            throw new UnauthorizedException('Email and password are required');
         }
+
         const user = await this.authService.validateUser(req.email, req.password);
         if (!user) {
-            return { message: 'Valid credentials are required' };
+            throw new UnauthorizedException('Credenciais invalidas');
         }
+
         return this.authService.login(user);
     }
 
@@ -36,23 +38,58 @@ export class AuthController {
         schema: {
             type: 'object',
             properties: {
-                name: { type: 'string', example: 'Novo Usuário' },
+                name: { type: 'string', example: 'Novo Usuario' },
                 email: { type: 'string', example: 'usuario@empresa.com' },
                 password: { type: 'string', example: 'senha123' },
             },
         },
     })
-    async register(@Body() req) {
+    async register(@Body() req: { name?: string; email?: string; password?: string }) {
         if (!req.name || !req.email || !req.password) {
-            return { message: 'Name, email and password are required' };
+            throw new UnauthorizedException('Name, email and password are required');
         }
         return this.authService.register(req.name, req.email, req.password);
+    }
+
+    @Post('forgot-password')
+    @ApiOperation({ summary: 'Send reset password link by email' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                email: { type: 'string', example: 'usuario@empresa.com' },
+            },
+        },
+    })
+    async forgotPassword(@Body() req: { email?: string }) {
+        if (!req.email) {
+            throw new UnauthorizedException('Email is required');
+        }
+        return this.authService.requestPasswordReset(req.email);
+    }
+
+    @Post('reset-password')
+    @ApiOperation({ summary: 'Reset password using token sent by email' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                token: { type: 'string', example: 'uuid-token' },
+                password: { type: 'string', example: 'novaSenha123' },
+            },
+        },
+    })
+    async resetPassword(@Body() req: { token?: string; password?: string }) {
+        if (!req.token || !req.password) {
+            throw new UnauthorizedException('Token and password are required');
+        }
+        return this.authService.resetPassword(req.token, req.password);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Get('profile')
     @ApiOperation({ summary: 'Get current user profile' })
-    getProfile(@Request() req) {
+    getProfile(@Request() req: any) {
         return req.user;
     }
 
@@ -66,21 +103,21 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt'))
     @Post('users/:id/approve')
     @ApiOperation({ summary: 'Approve and activate user' })
-    async approveUser(@Request() req) {
-        return this.authService.setUserActive(req.params.id, true);
+    async approveUser(@Param('id') id: string) {
+        return this.authService.setUserActive(id, true);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Post('users/:id/revoke')
     @ApiOperation({ summary: 'Revoke user access' })
-    async revokeUser(@Request() req) {
-        return this.authService.setUserActive(req.params.id, false);
+    async revokeUser(@Param('id') id: string) {
+        return this.authService.setUserActive(id, false);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Post('users/:id/permissions')
     @ApiOperation({ summary: 'Set user permissions by module/action' })
-    async setUserPermissions(@Request() req, @Body() body: { permissions: Record<string, any> }) {
-        return this.authService.setUserPermissions(req.params.id, body?.permissions || {});
+    async setUserPermissions(@Param('id') id: string, @Body() body: { permissions: Record<string, any> }) {
+        return this.authService.setUserPermissions(id, body?.permissions || {});
     }
 }

@@ -191,6 +191,53 @@
                   </div>
                 </v-card-text>
               </v-card>
+
+              <v-card elevation="2" class="form-card logo-card mt-4">
+                <v-card-title class="section-title">Foto do Proprietário</v-card-title>
+                <v-card-text class="logo-card-content">
+                  <input
+                    ref="ownerPhotoInput"
+                    type="file"
+                    accept="image/*"
+                    class="logo-input"
+                    @change="handleOwnerPhotoUpload"
+                  />
+
+                  <div v-if="!form.ownerPhotoUrl && !ownerPreviewUrl" class="logo-section">
+                    <p class="logo-title">Adicione a foto principal do proprietário</p>
+                    <div class="logo-empty-state">
+                      <v-icon icon="mdi-account-box-plus-outline" size="24" color="primary" />
+                      <p>Envie uma foto para exibir na tela de login</p>
+                    </div>
+                    <v-btn color="primary" variant="flat" block @click="abrirSeletorOwnerPhoto">Selecionar foto</v-btn>
+                  </div>
+
+                  <div v-else class="logo-section">
+                    <p class="logo-title mb-2">Foto atual</p>
+                    <v-img
+                      :src="ownerPreviewUrl || form.ownerPhotoUrl"
+                      height="240"
+                      cover
+                      class="owner-photo-preview"
+                    />
+                    <v-text-field
+                      v-model="form.ownerName"
+                      label="Nome do proprietário"
+                      class="mt-3"
+                    />
+                    <div class="logo-toolbar">
+                      <v-btn color="primary" variant="tonal" @click="abrirSeletorOwnerPhoto">
+                        <v-icon icon="mdi-image-edit-outline" class="mr-2" />
+                        Alterar
+                      </v-btn>
+                      <v-btn color="error" variant="tonal" @click="removerOwnerPhoto">
+                        <v-icon icon="mdi-delete-outline" class="mr-2" />
+                        Remover
+                      </v-btn>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
           </v-row>
         </v-form>
@@ -294,7 +341,9 @@ const usersStore = useUsersStore()
 
 const activeTab = ref('geral')
 const logoInput = ref<HTMLInputElement | null>(null)
+const ownerPhotoInput = ref<HTMLInputElement | null>(null)
 const previewUrl = ref<string>('')
+const ownerPreviewUrl = ref<string>('')
 const salvando = ref(false)
 const editandoLogo = ref(false)
 const isDraggingLogo = ref(false)
@@ -333,6 +382,8 @@ const userHeaders = [
 const form = ref({
   nomeCRM: branding.value.nomeCRM,
   logoUrl: branding.value.logoUrl,
+  ownerPhotoUrl: branding.value.ownerPhotoUrl || '/assets/images/owners/owner-main.png',
+  ownerName: branding.value.ownerName || 'Proprietário do CRM',
   logoScale: branding.value.logoScale,
   logoOffsetX: branding.value.logoOffsetX || 0,
   logoOffsetY: branding.value.logoOffsetY || 0,
@@ -355,6 +406,10 @@ const logoPreviewStyle = computed(() => ({
 
 const abrirSeletorLogo = () => {
   logoInput.value?.click()
+}
+
+const abrirSeletorOwnerPhoto = () => {
+  ownerPhotoInput.value?.click()
 }
 
 const removerLogo = () => {
@@ -414,6 +469,28 @@ const handleLogoUpload = (event: Event) => {
     reader.readAsDataURL(file)
   } else {
     previewUrl.value = ''
+  }
+}
+
+const handleOwnerPhotoUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    ownerPreviewUrl.value = e.target?.result as string
+    form.value.ownerPhotoUrl = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+const removerOwnerPhoto = () => {
+  form.value.ownerPhotoUrl = ''
+  ownerPreviewUrl.value = ''
+  if (ownerPhotoInput.value) {
+    ownerPhotoInput.value.value = ''
   }
 }
 
@@ -645,6 +722,12 @@ const resetarPosicaoLogo = () => {
   gap: 0.5rem;
   flex-wrap: wrap;
   margin-top: 0.5rem;
+}
+
+.owner-photo-preview {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
 }
 
 .logo-footer-actions {
