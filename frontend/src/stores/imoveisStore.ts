@@ -5,7 +5,7 @@ import { api } from '../services/api'
 export interface Empreendimento {
     id: string;
     nome: string;
-    status: 'LANCAMENTO' | 'EM_OBRAS' | 'PRONTO' | 'ESGOTADO';
+    status: 'LANÇAMENTO' | 'EM OBRAS' | 'PRONTO' | 'ESGOTADO';
     previsaoEntrega?: string;
     descricaoCurta?: string;
     enderecoCep?: string;
