@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    container_name: crm-backend
+    restart: always
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=your_password
+      - DB_DATABASE=crm
+    depends_on:
+      - postgres
+    networks:
+      - crm-network
+
+  frontend:
+    build: ./frontend
+    container_name: crm-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - crm-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: crm-db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=your_password
+      - POSTGRES_DB=crm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
