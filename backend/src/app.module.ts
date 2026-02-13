@@ -33,7 +33,7 @@ import { ImovelModule } from './apps/produto-imobiliaria/imovel.module';
       password: process.env.DB_PASSWORD || 'Davi_123',
       database: process.env.DB_DATABASE || 'crm',
       autoLoadModels: true,
-      synchronize: false,
+      synchronize: process.env.DB_SYNCHRONIZE === 'true',
       logging: console.log,
     }),
 
