@@ -23,8 +23,8 @@
               <h2 class="mobile-form-title">Acesse sua conta</h2>
               <v-text-field
                 v-model="loginEmail"
-                label="E-mail"
-                type="email"
+                label="Usuário ou e-mail"
+                type="text"
                 prepend-inner-icon="mdi-email-outline"
                 variant="solo"
                 flat
@@ -104,7 +104,7 @@
         
         <div class="powered-by-mobile">
           <span class="powered-by-text">Powered by One Cup Tech Solutions</span>
-          <div class="powered-by-icon">☕</div>
+          <img src="/one-cup-logo.png" alt="One Cup Tech Solutions" class="powered-by-icon-img" />
         </div>
       </div>
     </template>
@@ -146,37 +146,13 @@
 
       <v-col cols="12" md="6" class="form-panel">
         <v-sheet class="auth-shell" elevation="0">
-          <div class="mode-switch">
-            <v-btn
-              :variant="mode === 'login' ? 'flat' : 'text'"
-              :color="mode === 'login' ? 'primary' : 'default'"
-              @click="setMode('login')"
-            >
-              Entrar
-            </v-btn>
-            <v-btn
-              :variant="mode === 'register' ? 'flat' : 'text'"
-              :color="mode === 'register' ? 'primary' : 'default'"
-              @click="setMode('register')"
-            >
-              Registrar
-            </v-btn>
-            <v-btn
-              :variant="mode === 'forgot' ? 'flat' : 'text'"
-              :color="mode === 'forgot' ? 'primary' : 'default'"
-              @click="setMode('forgot')"
-            >
-              Esqueci a senha
-            </v-btn>
-          </div>
-
           <v-alert v-if="statusMessage" :type="statusType" variant="tonal" class="mb-4">
             {{ statusMessage }}
           </v-alert>
 
           <v-form v-if="mode === 'login'" @submit.prevent="handleLogin" class="auth-form">
             <h3 class="form-title">Acesse sua conta</h3>
-            <v-text-field v-model="loginEmail" label="E-mail" type="email" prepend-inner-icon="mdi-email-outline" required />
+            <v-text-field v-model="loginEmail" label="Usuário ou e-mail" type="text" prepend-inner-icon="mdi-email-outline" required />
             <v-text-field
               v-model="loginPassword"
               label="Senha"
@@ -186,7 +162,13 @@
               @click:append-inner="showPassword = !showPassword"
               required
             />
+            <v-btn variant="text" class="forgot-link" @click="setMode('forgot')">Esqueceu a senha?</v-btn>
             <v-btn type="submit" color="primary" size="large" block :loading="loading">Entrar</v-btn>
+            <v-divider class="my-4" />
+            <p class="create-label">Ainda não tem conta?</p>
+            <v-btn variant="outlined" color="primary" block class="create-btn" @click="setMode('register')">
+              Criar conta
+            </v-btn>
           </v-form>
 
           <v-form v-else-if="mode === 'register'" @submit.prevent="handleRegister" class="auth-form">
@@ -234,7 +216,7 @@
     
     <div v-if="!mobile" class="powered-by-desktop">
       <span class="powered-by-text">Powered by One Cup Tech Solutions</span>
-      <div class="powered-by-icon">☕</div>
+      <img src="/one-cup-logo.png" alt="One Cup Tech Solutions" class="powered-by-icon-img" />
     </div>
 
   </v-container>
@@ -274,7 +256,11 @@ const resetToken = ref('')
 const resetPassword = ref('')
 
 const crmName = computed(() => brandingStore.branding.value.nomeCRM || 'CRM')
-const logoSrc = computed(() => brandingStore.branding.value.logoUrl || '/one-cup-logo.png')
+const logoSrc = computed(() => {
+  const configured = (brandingStore.branding.value.logoUrl || '').trim()
+  if (configured && !configured.includes('one-cup-logo')) return configured
+  return '/assets/images/logos/logo-owner.png'
+})
 const ownerPhotoSrc = computed(() => brandingStore.branding.value.ownerPhotoUrl || '/assets/images/owners/owner-main.png')
 const ownerName = computed(() => brandingStore.branding.value.ownerName || 'Proprietário do CRM')
 
@@ -663,13 +649,6 @@ async function handleResetPassword() {
   box-shadow: 0 24px 55px rgba(23, 48, 91, 0.16);
 }
 
-.mode-switch {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -706,16 +685,13 @@ async function handleResetPassword() {
   letter-spacing: -0.02em;
 }
 
-.powered-by-icon {
+.powered-by-icon-img {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: contain;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  font-size: 16px;
 }
 
 .powered-by-mobile {
@@ -725,4 +701,5 @@ async function handleResetPassword() {
   justify-content: center;
   gap: 10px;
 }
+
 </style>

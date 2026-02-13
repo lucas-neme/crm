@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../models/user.model';
 import * as bcrypt from 'bcrypt';
 import * as nodeCrypto from 'crypto';
+import { Op } from 'sequelize';
 
 import { Configuracao } from '../../configuracoes/models/configuracao.model';
 
@@ -22,8 +23,18 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.userModel.findOne({ where: { email } });
+    async validateUser(identifier: string, pass: string): Promise<any> {
+        const normalized = (identifier || '').trim().toLowerCase();
+        const lookup = normalized === 'admin' ? 'admin@example.com' : normalized;
+
+        const user = await this.userModel.findOne({
+            where: {
+                [Op.or]: [
+                    { email: lookup },
+                    { name: identifier.trim() },
+                ],
+            },
+        });
         if (!user) return null;
 
         if (!user.isActive) {
@@ -50,10 +61,11 @@ export class AuthService {
     }
 
     async seedAdminUser() {
-        const count = await this.userModel.count();
-        if (count === 0) {
-            const salt = await bcrypt.genSalt();
-            const passwordHash = await bcrypt.hash('admin123', salt);
+        const salt = await bcrypt.genSalt();
+        const passwordHash = await bcrypt.hash('admin123', salt);
+
+        const existingAdmin = await this.userModel.findOne({ where: { email: 'admin@example.com' } });
+        if (!existingAdmin) {
             await this.userModel.create({
                 email: 'admin@example.com',
                 name: 'Admin',
@@ -61,7 +73,14 @@ export class AuthService {
                 isActive: true,
             });
             console.log('Admin user created: admin@example.com / admin123');
+            return;
         }
+
+        existingAdmin.name = 'Admin';
+        existingAdmin.passwordHash = passwordHash;
+        existingAdmin.isActive = true;
+        await existingAdmin.save();
+        console.log('Admin user ensured: admin@example.com / admin123');
     }
 
     async register(name: string, email: string, password: string) {

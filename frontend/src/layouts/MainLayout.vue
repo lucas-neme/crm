@@ -10,8 +10,8 @@
       <div class="brand">
         <div class="brand-logo-container">
           <img
-            v-if="branding.logoUrl"
-            :src="branding.logoUrl"
+            v-if="crmLogoUrl"
+            :src="crmLogoUrl"
             alt="Logo"
             class="brand-logo"
             :style="{ transform: `translate(${branding.logoOffsetX || 0}px, ${branding.logoOffsetY || 0}px) scale(${branding.logoScale / 100})` }"
@@ -62,22 +62,26 @@
     </v-navigation-drawer>
 
     <v-main class="main">
-      <div class="top-shell">
+      <div class="top-shell" :class="{ 'mobile-header': mobile }">
         <div class="top-row">
-          <v-btn v-if="mobile" icon="mdi-menu" variant="text" class="mr-2" @click="drawer = !drawer" />
+          <v-btn v-if="mobile" icon="mdi-menu" variant="text" color="white" class="mr-n2" @click="drawer = !drawer" />
+          
           <RouterLink v-if="mobile" to="/" class="top-brand" aria-label="Ir para Home">
             <div class="top-brand-logo">
               <img
-                v-if="branding.logoUrl"
-                :src="branding.logoUrl"
+                v-if="crmLogoUrl"
+                :src="crmLogoUrl"
                 alt="Logo"
                 class="top-brand-logo-img"
                 :style="{ transform: `translate(${branding.logoOffsetX || 0}px, ${branding.logoOffsetY || 0}px) scale(${branding.logoScale / 100})` }"
               />
-              <v-icon v-else icon="mdi-domain" size="16" />
+              <v-icon v-else icon="mdi-domain" color="#d4a878" size="20" />
             </div>
-            <span class="top-brand-text">{{ branding.nomeCRM || 'CRM' }}</span>
+            <span class="top-brand-text text-white">{{ branding.nomeCRM || 'Nemer Negócios' }}</span>
           </RouterLink>
+
+
+
           <div v-if="!mobile" class="breadcrumbs-wrap">
             <Breadcrumbs />
           </div>
@@ -86,7 +90,7 @@
           <v-menu location="bottom end">
             <template #activator="{ props }">
               <v-btn icon variant="text" class="user-trigger" v-bind="props">
-                <v-avatar size="34" class="avatar">
+                <v-avatar size="34" class="avatar" :class="{ 'mobile-avatar': mobile }">
                   <img v-if="userAvatar" :src="userAvatar" alt="Avatar do usuário" />
                   <span v-else>{{ userInitials }}</span>
                 </v-avatar>
@@ -108,11 +112,33 @@
         </div>
       </div>
 
-      <div class="content">
+      <div class="content" :class="{ 'mobile-content': mobile }">
         <RouterView />
       </div>
 
-      <footer class="global-footer">
+      <v-bottom-navigation v-if="mobile" grow color="primary">
+        <v-btn to="/">
+          <v-icon>mdi-home</v-icon>
+          <span>Home</span>
+        </v-btn>
+
+        <v-btn to="/clientes">
+          <v-icon>mdi-account-group-outline</v-icon>
+          <span>Clientes</span>
+        </v-btn>
+
+        <v-btn to="/negocios">
+          <v-icon>mdi-briefcase-outline</v-icon>
+          <span>Negócios</span>
+        </v-btn>
+
+        <v-btn to="/configurar">
+          <v-icon>mdi-cog-outline</v-icon>
+          <span>Config</span>
+        </v-btn>
+      </v-bottom-navigation>
+
+      <footer v-if="!mobile" class="global-footer">
         <div class="footer-content">
           <span class="footer-company">Powered by One Cup Tech Solutions</span>
           <img src="/one-cup-logo.png" alt="One Cup Tech Solutions" class="footer-logo" />
@@ -139,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
@@ -156,6 +182,11 @@ const modulesStore = useModulesStore()
 
 const { mobile } = useDisplay()
 const drawer = ref(!mobile.value)
+const crmLogoUrl = computed(() => {
+  const configured = (branding.value?.logoUrl || '').trim()
+  if (configured && !configured.includes('one-cup-logo')) return configured
+  return '/assets/images/logos/logo-owner.png'
+})
 
 watch(mobile, (val) => {
   drawer.value = !val
@@ -441,7 +472,29 @@ function handleLogout() {
 
 @media (max-width: 768px) {
   .top-shell {
-    padding: 0.35rem 3.8rem 0.35rem 0.75rem;
+    padding: 0.35rem 1rem;
+    transition: background 0.3s;
+  }
+  
+  .top-shell.mobile-header {
+    background: #1e293b; /* Dark blue background for mobile header */
+    border-bottom: 1px solid #334155;
+    padding: 0.75rem 1rem;
+  }
+
+  .top-shell.mobile-header .top-brand-logo {
+     background: transparent;
+     border: none;
+  }
+
+  .avatar.mobile-avatar {
+    background: #cbd5e1;
+    color: #0f172a;
+    border: none;
+  }
+  
+  .mobile-content {
+      padding-bottom: 60px !important; /* Space for bottom nav */
   }
 
   .top-row {

@@ -9,12 +9,12 @@ export class AuthController {
     constructor(private authService: AuthService) { }
 
     @Post('login')
-    @ApiOperation({ summary: 'Login with email and password' })
+    @ApiOperation({ summary: 'Login with username/email and password' })
     @ApiBody({
         schema: {
             type: 'object',
             properties: {
-                email: { type: 'string', example: 'admin@example.com' },
+                email: { type: 'string', example: 'admin ou admin@example.com' },
                 password: { type: 'string', example: 'admin123' },
             },
         },
