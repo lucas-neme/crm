@@ -94,8 +94,20 @@ export class AuthService {
         permissionsMap[admin.id] = fullPerms;
         permissionsMap[nemer.id] = fullPerms;
         
-        await this.setPermissionsMap(permissionsMap);
-        console.log('Permissions updated for Admin and Nemer Vendas');
+        try {
+            await this.setPermissionsMap(permissionsMap);
+            console.log('Permissions updated for Admin and Nemer Vendas');
+        } catch (error: any) {
+            const code = error?.original?.code || error?.parent?.code || error?.code;
+            if (code === '22001') {
+                console.warn(
+                    'Skipping permissions seed: configuracoes.valor is too short (varchar). ' +
+                    'Run SQL migration to TEXT to persist permissions map.'
+                );
+            } else {
+                throw error;
+            }
+        }
     }
 
     async register(name: string, email: string, password: string) {
