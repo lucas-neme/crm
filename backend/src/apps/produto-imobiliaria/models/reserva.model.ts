@@ -59,7 +59,7 @@ export class Reserva extends Model {
     dataFim: Date;
 
     @Column({
-        type: DataType.ENUM('ATIVA', 'VENCIDA', 'CANCELADA', 'CONVERTIDA'),
+        type: DataType.ENUM('ATIVA', 'VENCIDA', 'CANCELADA', 'CONVERTIDA', 'EXPIRADA'),
         defaultValue: 'ATIVA'
     })
     status: string;

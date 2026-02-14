@@ -1,8 +1,5 @@
-/**
- * main.ts
- *
- * Bootstraps Vuetify and other plugins then mounts the App`
- */
+// Styles
+import './styles/main.css'
 
 // Plugins
 import { registerPlugins } from '@/plugins'

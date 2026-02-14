@@ -13,7 +13,7 @@ export class Configuracao extends Model {
     chave: string;
 
     @Column({
-        type: DataType.STRING,
+        type: DataType.TEXT,
         allowNull: false,
     })
     valor: string;

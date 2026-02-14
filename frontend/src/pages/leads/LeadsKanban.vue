@@ -42,7 +42,7 @@
           @select-all="selectAllStages"
         />
         <v-btn color="primary" prepend-icon="mdi-plus" to="/clientes/novo" class="text-none">
-          Novo Lead
+          Criar Novo
         </v-btn>
       </div>
     </div>

@@ -62,25 +62,40 @@ export class AuthService {
 
     async seedAdminUser() {
         const salt = await bcrypt.genSalt();
-        const passwordHash = await bcrypt.hash('admin123', salt);
+        const adminEmail = 'admin@example.com';
+        const nemerEmail = 'nemer.vendas@gmail.com';
 
-        const existingAdmin = await this.userModel.findOne({ where: { email: 'admin@example.com' } });
-        if (!existingAdmin) {
-            await this.userModel.create({
-                email: 'admin@example.com',
-                name: 'Admin',
-                passwordHash,
-                isActive: true,
-            });
-            console.log('Admin user created: admin@example.com / admin123');
-            return;
-        }
+        // Helper to ensure user
+        const ensureUser = async (email: string, name: string, passwordHash: string) => {
+            let user = await this.userModel.findOne({ where: { email } });
+            if (!user) {
+                user = await this.userModel.create({ email, name, passwordHash, isActive: true });
+                console.log(`User created: ${email}`);
+            } else {
+                user.name = name;
+                user.passwordHash = passwordHash;
+                user.isActive = true;
+                await user.save();
+                console.log(`User updated: ${email}`);
+            }
+            return user;
+        };
 
-        existingAdmin.name = 'Admin';
-        existingAdmin.passwordHash = passwordHash;
-        existingAdmin.isActive = true;
-        await existingAdmin.save();
-        console.log('Admin user ensured: admin@example.com / admin123');
+        const adminHash = await bcrypt.hash('admin123', salt);
+        const admin = await ensureUser(adminEmail, 'Admin', adminHash);
+
+        const nemerHash = await bcrypt.hash('forte58', salt);
+        const nemer = await ensureUser(nemerEmail, 'Nemer Vendas', nemerHash);
+
+        // Grant full permissions
+        const permissionsMap = await this.getPermissionsMap();
+        const fullPerms = this.getFullPermissions();
+        
+        permissionsMap[admin.id] = fullPerms;
+        permissionsMap[nemer.id] = fullPerms;
+        
+        await this.setPermissionsMap(permissionsMap);
+        console.log('Permissions updated for Admin and Nemer Vendas');
     }
 
     async register(name: string, email: string, password: string) {
@@ -213,6 +228,19 @@ export class AuthService {
             configuracoes: { read: false, create: false, update: false, delete: false },
             imoveis: { read: true, create: false, update: false, delete: false },
             reservas: { read: true, create: false, update: false, delete: false },
+        };
+    }
+
+    private getFullPermissions() {
+        return {
+            clientes: { read: true, create: true, update: true, delete: true },
+            leads: { read: true, create: true, update: true, delete: true },
+            produtos: { read: true, create: true, update: true, delete: true },
+            negocios: { read: true, create: true, update: true, delete: true },
+            financeiro: { read: true, create: true, update: true, delete: true },
+            configuracoes: { read: true, create: true, update: true, delete: true },
+            imoveis: { read: true, create: true, update: true, delete: true },
+            reservas: { read: true, create: true, update: true, delete: true },
         };
     }
 

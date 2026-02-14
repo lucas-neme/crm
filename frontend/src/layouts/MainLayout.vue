@@ -272,15 +272,14 @@ function handleLogout() {
   justify-content: center;
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.08);
+  background: #fff;
 }
 
 .brand-logo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transform-origin: center;
-  border-radius: 50%;
+  object-fit: contain;
+  padding: 2px;
 }
 
 .brand-logo-placeholder {

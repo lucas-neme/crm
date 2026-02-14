@@ -1,27 +1,24 @@
 ﻿<template>
   <v-container fluid class="page">
-    <div class="page-header">
-      <div class="header-left-group">
+    <div class="page-header" :class="{ 'mobile-header': mobile }">
+      <div class="header-main">
         <div>
-          <h2>Clientes</h2>
-          <p class="subtitle">Gerencie seus clientes cadastrados</p>
+          <h2 class="page-title">Clientes</h2>
+          <p v-if="!mobile" class="subtitle">Gerencie seus clientes cadastrados</p>
         </div>
-        <div v-if="mobile" class="mobile-top-actions">
-          <v-btn color="primary" to="/clientes/novo" class="text-none mb-2" block flat>+ Novo Cliente</v-btn>
+        <div v-if="mobile" class="header-main-actions d-flex ga-2">
           <v-btn
             variant="flat"
             color="success"
-            prepend-icon="mdi-file-excel"
+            icon="mdi-file-excel"
             :loading="importandoCsv"
             class="text-none"
-            block
-            flat
             @click="abrirImportadorCsv"
-          >
-            Importar CSV
-          </v-btn>
+          />
+          <v-btn color="primary" to="/clientes/novo" icon="mdi-plus" flat />
         </div>
       </div>
+
       <div class="header-actions">
         <v-text-field
           v-if="!mobile"
@@ -35,7 +32,7 @@
         />
         <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
           <template #activator="{ props }">
-            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+            <v-btn v-bind="props" icon variant="tonal" class="action-icon-btn" aria-label="Pesquisar">
               <v-icon icon="mdi-magnify" />
             </v-btn>
           </template>
@@ -70,10 +67,11 @@
           >
             Importar CSV
           </v-btn>
-          <v-btn color="primary" to="/clientes/novo" class="text-none action-btn">+ Novo Cliente</v-btn>
+          <v-btn color="primary" to="/clientes/novo" class="text-none action-btn">+ Criar Novo</v-btn>
         </template>
       </div>
     </div>
+
 
     <input
       ref="csvInputRef"
@@ -249,7 +247,7 @@
             <p class="text-h6 text-grey-darken-1 mb-2">Você ainda não tem Clientes</p>
             <p class="text-body-2 text-grey mb-6">Cadastre seu primeiro cliente aqui</p>
             <v-btn color="primary" to="/clientes/novo" prepend-icon="mdi-plus">
-              Novo Cliente
+              Criar Novo
             </v-btn>
           </div>
         </template>
@@ -674,33 +672,7 @@ onMounted(() => {
   text-align: center;
 }
 @media (max-width: 960px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-left-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-
-  .mobile-top-actions {
-    display: flex;
-    flex-direction: column;
-    width: 160px;
-    flex-shrink: 0;
-    margin-left: 1rem;
-  }
-
   .header-actions {
-    flex-direction: row;
-    width: 100%;
-    align-items: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
     padding-bottom: 0.2rem;
   }
 
@@ -708,10 +680,6 @@ onMounted(() => {
   .header-actions :deep(.v-menu),
   .header-actions :deep(.column-manager-menu) {
     flex-shrink: 0;
-  }
-
-  .header-actions .action-btn {
-    min-width: max-content;
   }
 }
 

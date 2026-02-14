@@ -1,0 +1,72 @@
+/* Global Styles */
+
+/* Action Icon Buttons (Search, Column Manager, etc) */
+.action-icon-btn {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  border-radius: 50% !important;
+  background-color: #eef2ff !important; /* light indigo/blue base */
+  color: #312e81 !important; /* dark indigo */
+  border: 1.5px solid #c7d2fe !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.action-icon-btn:hover {
+  background-color: #e0e7ff !important;
+  border-color: #a5b4fc !important;
+  transform: translateY(-1px);
+}
+
+.action-icon-btn .v-icon {
+  font-size: 22px !important;
+}
+
+/* Page Header Structure */
+.page-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 24px !important;
+  gap: 16px !important;
+  width: 100% !important;
+}
+
+.header-main {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+}
+
+.header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+@media (max-width: 960px) {
+  .mobile-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .mobile-header .header-main {
+    margin-bottom: 4px !important;
+  }
+
+  .mobile-header .header-actions {
+    justify-content: flex-start !important;
+    width: 100% !important;
+    padding-left: 4px !important;
+  }
+
+  .action-icon-btn .v-icon {
+    font-size: 32px !important;
+  }
+}

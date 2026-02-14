@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Reserva } from '../models/reserva.model';
 import { Unidade } from '../models/unidade.model';
 import { Cliente } from '../../cliente/models/cliente.model';
-import { Op } from 'sequelize';
 
 @Injectable()
 export class ReservaService {
@@ -15,6 +14,7 @@ export class ReservaService {
     ) { }
 
     async create(data: Partial<Reserva>): Promise<Reserva> {
+        await this.verifyExpiredReservations();
         const unidade = await this.unidadeModel.findByPk(data.unidadeId);
         if (!unidade) throw new BadRequestException('Unidade não encontrada');
 
@@ -27,7 +27,6 @@ export class ReservaService {
             where: {
                 unidadeId: data.unidadeId,
                 status: 'ATIVA',
-                dataFim: { [Op.gt]: new Date() }
             }
         });
 
@@ -44,6 +43,8 @@ export class ReservaService {
     }
 
     async findAll(query: any = {}): Promise<Reserva[]> {
+        await this.verifyExpiredReservations();
+
         const where: any = {};
         if (query.unidadeId) where.unidadeId = query.unidadeId;
         if (query.clienteId) where.clienteId = query.clienteId;
@@ -89,15 +90,19 @@ export class ReservaService {
     }
 
     async verifyExpiredReservations(): Promise<number> {
-        const expired = await this.reservaModel.findAll({
-            where: {
-                status: 'ATIVA',
-                dataFim: { [Op.lt]: new Date() }
-            }
-        });
+        const activeReservas = await this.reservaModel.findAll({ where: { status: 'ATIVA' } });
+        const now = new Date();
+        let processed = 0;
 
-        for (const res of expired) {
+        for (const res of activeReservas) {
+            const dataFim = new Date(res.dataFim);
+            const expirationAt = new Date(dataFim);
+            expirationAt.setHours(23, 59, 59, 999);
+
+            if (now <= expirationAt) continue;
+
             await res.update({ status: 'EXPIRADA' });
+            processed += 1;
 
             // Check if unity should be freed
             const unit = await this.unidadeModel.findByPk(res.unidadeId);
@@ -106,6 +111,6 @@ export class ReservaService {
             }
         }
 
-        return expired.length;
+        return processed;
     }
 }

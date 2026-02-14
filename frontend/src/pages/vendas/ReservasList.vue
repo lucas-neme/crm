@@ -1,10 +1,13 @@
 ﻿<template>
   <v-container fluid class="page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Gestão de Reservas</h2>
-        <p class="summary-text">{{ store.reservas.length }} reservas ativas/recentes</p>
+    <div class="page-header" :class="{ 'mobile-header': mobile }">
+      <div class="header-main">
+        <div>
+          <h2 class="page-title">Gestão de Reservas</h2>
+          <p v-if="!mobile" class="summary-text">{{ store.reservas.length }} reservas ativas/recentes</p>
+        </div>
       </div>
+
       <div class="header-actions">
         <v-text-field
           v-if="!mobile"
@@ -18,7 +21,7 @@
         />
         <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
           <template #activator="{ props }">
-            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+            <v-btn v-bind="props" icon variant="tonal" class="action-icon-btn" aria-label="Pesquisar">
               <v-icon icon="mdi-magnify" />
             </v-btn>
           </template>
@@ -42,12 +45,9 @@
           @reset="resetColumns"
           @select-all="selectAllColumns"
         />
-        <v-btn color="primary" variant="flat" @click="verificarExpiradas" :loading="checking" class="text-none action-btn">
-          <v-icon start icon="mdi-refresh"></v-icon>
-          Verificar Expiradas
-        </v-btn>
       </div>
     </div>
+
 
     <v-card elevation="2" class="table-card">
       <v-skeleton-loader
@@ -69,7 +69,7 @@
                 <h3 class="mobile-name">{{ item.cliente?.nome }}</h3>
                 <p class="mobile-meta">Unidade: {{ item.unidade?.codigoInterno }}</p>
               </div>
-              <v-chip :color="statusColor(item.status)" label size="small">{{ item.status }}</v-chip>
+              <v-chip :color="statusColor(item.status)" size="small" variant="flat">{{ formatStatus(item.status) }}</v-chip>
             </div>
             <p class="mobile-meta">{{ formatDate(item.dataInicio) }} até {{ formatDate(item.dataFim) }}</p>
             <p class="mobile-meta">{{ item.observacoes || '-' }}</p>
@@ -109,8 +109,8 @@
           <template #item.dataFim="{ item }">{{ formatDate(item.dataFim) }}</template>
 
           <template #item.status="{ item }">
-            <v-chip :color="statusColor(item.status)" label size="x-small">
-              {{ item.status }}
+            <v-chip :color="statusColor(item.status)" size="small" variant="flat">
+              {{ formatStatus(item.status) }}
             </v-chip>
           </template>
 
@@ -201,7 +201,6 @@ import { useColumnManager } from '../../composables/useColumnManager'
 
 const store = useVendasStore()
 const { mobile } = useDisplay()
-const checking = ref(false)
 const search = ref('')
 const searchMenu = ref(false)
 
@@ -268,12 +267,26 @@ const filteredReservas = computed(() => {
 
 const statusColor = (status: string) => {
   switch (status) {
-    case 'ATIVA': return 'success'
+    case 'ATIVA':
+    case 'CONVERTIDA':
+      return 'blue'
     case 'VENCIDA':
-    case 'EXPIRADA': return 'error'
-    case 'CANCELADA': return 'grey'
-    case 'CONVERTIDA': return 'primary'
-    default: return 'info'
+    case 'EXPIRADA':
+    case 'CANCELADA':
+      return 'grey-lighten-2'
+    default:
+      return 'grey-lighten-2'
+  }
+}
+
+const formatStatus = (status: string) => {
+  switch (status) {
+    case 'ATIVA': return 'Ativa'
+    case 'VENCIDA': return 'Vencida'
+    case 'EXPIRADA': return 'Expirada'
+    case 'CANCELADA': return 'Cancelada'
+    case 'CONVERTIDA': return 'Convertida'
+    default: return status
   }
 }
 
@@ -325,21 +338,6 @@ const salvarEdicao = async () => {
 const excluir = async (id: string) => {
   if (confirm('Deseja excluir esta reserva?')) {
     await store.cancelReserva(id)
-  }
-}
-
-const verificarExpiradas = async () => {
-  checking.value = true
-  try {
-    const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:3000'
-    const res = await fetch(`${getApiUrl()}/reservas/verify-expired`, { method: 'POST' })
-    const data = await res.json()
-    notificationsStore.notify(`${data.expiredProcessed} reservas expiradas processadas.`, 'info')
-    await store.fetchReservas()
-  } catch (error) {
-    notificationsStore.notify('Erro ao verificar reservas expiradas.', 'error')
-  } finally {
-    checking.value = false
   }
 }
 
@@ -438,27 +436,14 @@ onMounted(() => {
 }
 
 @media (max-width: 960px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .header-actions {
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
     padding-bottom: 0.2rem;
-    align-items: center;
   }
 
   .header-actions :deep(.v-btn),
   .header-actions :deep(.v-menu),
   .header-actions :deep(.column-manager-menu) {
     flex-shrink: 0;
-  }
-
-  .header-actions .action-btn {
-    min-width: max-content;
   }
 }
 </style>

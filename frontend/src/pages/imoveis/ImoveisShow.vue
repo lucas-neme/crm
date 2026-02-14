@@ -1,7 +1,7 @@
 <template>
   <v-container v-if="empreendimento" fluid class="page">
-    <v-row class="page-header">
-      <v-col cols="12" md="8">
+    <div class="page-header">
+      <div class="header-left">
         <div class="header-title-line">
           <h2>{{ empreendimento.nome }}</h2>
           <v-chip class="status-chip" :color="statusColor(empreendimento.status)">
@@ -11,11 +11,11 @@
         <div class="header-meta">
           <div class="text-subtitle-1">{{ locationText }}</div>
         </div>
-      </v-col>
-      <v-col cols="12" md="4" class="text-right">
-        <v-btn color="primary" variant="outlined" class="mr-2" :to="`/imoveis/${empreendimento.id}/editar`">Editar</v-btn>
-      </v-col>
-    </v-row>
+      </div>
+      <div class="header-right">
+        <v-btn color="primary" variant="outlined" :to="`/imoveis/${empreendimento.id}/editar`">Editar</v-btn>
+      </div>
+    </div>
 
     <v-card class="content-card">
       <v-tabs v-model="tab" bg-color="surface">
@@ -39,6 +39,7 @@
                :items="store.unidades"
                :loading="store.loading"
                density="compact"
+               items-per-page-text="Itens por página"
             >
                <template v-slot:item.valor="{ item }">
                  {{ formatCurrency(item.valorOferta || item.valorTabela) }}
@@ -192,12 +193,27 @@ onMounted(async () => {
 }
 
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
 .page-header h2 {
   margin: 0;
   color: #111827;
+}
+
+.header-left {
+  min-width: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .header-title-line {
@@ -221,5 +237,16 @@ onMounted(async () => {
 
 .content-card {
   margin-top: 0;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-right {
+    justify-content: flex-start;
+  }
 }
 </style>

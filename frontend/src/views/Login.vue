@@ -425,9 +425,11 @@ async function handleResetPassword() {
 }
 
 .mobile-logo {
-  width: 56px;
-  height: 56px;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
   object-fit: contain;
+  mix-blend-mode: multiply;
 }
 
 .mobile-title {

@@ -43,10 +43,18 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
-                                <v-text-field v-model="valorTabelaFormatted" label="Valor de Tabela (R$)"></v-text-field>
+                                <v-text-field
+                                  v-model="valorTabelaInput"
+                                  label="Valor de Tabela (R$)"
+                                  @blur="applyValorTabela"
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <v-text-field v-model="valorOfertaFormatted" label="Valor de Oferta (R$)"></v-text-field>
+                                <v-text-field
+                                  v-model="valorOfertaInput"
+                                  label="Valor de Oferta (R$)"
+                                  @blur="applyValorOferta"
+                                ></v-text-field>
                             </v-col>
 
                              <v-col cols="12">
@@ -67,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useImoveisStore, type Unidade } from '../../stores/imoveisStore'
 
 const props = defineProps<{ modelValue: boolean, unidade: Unidade }>()
@@ -76,6 +84,8 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 const store = useImoveisStore()
 const loading = ref(false)
 const dialog = ref(props.modelValue)
+const valorTabelaInput = ref('')
+const valorOfertaInput = ref('')
 
 const form = ref<any>({})
 
@@ -91,28 +101,53 @@ const formatCurrency = (value: number) => {
 }
 
 const parseCurrency = (value: string) => {
-    const clean = value.replace(/[^\d,]/g, '').replace(',', '.')
-    return parseFloat(clean) || 0
+    const raw = (value || '').trim()
+    if (!raw) return 0
+
+    const sanitized = raw.replace(/[^\d.,]/g, '')
+    const hasComma = sanitized.includes(',')
+    const hasDot = sanitized.includes('.')
+    let normalized = sanitized
+
+    if (hasComma && hasDot) {
+        const lastComma = sanitized.lastIndexOf(',')
+        const lastDot = sanitized.lastIndexOf('.')
+        if (lastComma > lastDot) {
+            normalized = sanitized.replace(/\./g, '').replace(',', '.')
+        } else {
+            normalized = sanitized.replace(/,/g, '')
+        }
+    } else if (hasComma) {
+        normalized = sanitized.replace(/\./g, '').replace(',', '.')
+    } else if (hasDot) {
+        const parts = sanitized.split('.')
+        if (parts.length > 2) {
+            normalized = parts.join('')
+        } else if (parts.length === 2 && parts[1].length > 2) {
+            normalized = parts.join('')
+        }
+    }
+
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : 0
 }
 
-const valorTabelaFormatted = computed({
-    get: () => formatCurrency(form.value.valorTabela),
-    set: (val) => {
-        form.value.valorTabela = parseCurrency(val)
-    }
-})
+const applyValorTabela = () => {
+    form.value.valorTabela = parseCurrency(valorTabelaInput.value)
+    valorTabelaInput.value = formatCurrency(form.value.valorTabela)
+}
 
-const valorOfertaFormatted = computed({
-    get: () => formatCurrency(form.value.valorOferta),
-    set: (val) => {
-        form.value.valorOferta = parseCurrency(val)
-    }
-})
+const applyValorOferta = () => {
+    form.value.valorOferta = parseCurrency(valorOfertaInput.value)
+    valorOfertaInput.value = formatCurrency(form.value.valorOferta)
+}
 
 watch(() => props.modelValue, (val) => {
     dialog.value = val
     if (val && props.unidade) {
         form.value = { ...props.unidade }
+        valorTabelaInput.value = formatCurrency(Number(form.value.valorTabela) || 0)
+        valorOfertaInput.value = formatCurrency(Number(form.value.valorOferta) || 0)
     }
 })
 
@@ -122,6 +157,8 @@ watch(dialog, (val) => {
 
 const salvar = async () => {
     loading.value = true
+    applyValorTabela()
+    applyValorOferta()
     const payload = {
         codigoInterno: form.value.codigoInterno,
         tipo: form.value.tipo,

@@ -10,11 +10,10 @@
           <v-btn
             icon
             variant="tonal"
-            size="small"
-            class="column-trigger"
+            class="column-trigger action-icon-btn"
             v-bind="{ ...props, ...tooltipProps }"
           >
-            <v-icon icon="mdi-tune-variant" />
+            <v-icon icon="mdi-tune-variant" size="20" />
           </v-btn>
         </template>
       </v-tooltip>
@@ -80,12 +79,9 @@ const onToggle = (key: string, checked: boolean | null) => {
 }
 </script>
 
+
+
 <style scoped>
-.column-trigger {
-  border: 1px solid #c5d2e8;
-  color: #1f3c66;
-  background: linear-gradient(135deg, #eaf2ff 0%, #dbeafe 100%);
-}
 
 .column-menu-card {
   border: 1px solid #dbe3f0;
@@ -98,3 +94,4 @@ const onToggle = (key: string, checked: boolean | null) => {
   overflow-y: auto;
 }
 </style>
+

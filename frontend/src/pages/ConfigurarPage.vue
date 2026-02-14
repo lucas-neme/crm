@@ -25,7 +25,11 @@
                       <v-text-field v-model="form.nomeCRM" label="Nome do CRM" required />
                     </v-col>
                     <v-col cols="12" md="4">
-                      <v-text-field v-model="form.cnpj" label="CNPJ" />
+                      <v-text-field
+                        v-model="form.cnpj"
+                        label="CNPJ"
+                        @update:model-value="onCnpjInput"
+                      />
                     </v-col>
                     <v-col cols="12">
                       <v-text-field v-model="form.website" label="Site" />
@@ -42,7 +46,11 @@
                       <v-text-field v-model="form.email" label="Email de contato" type="email" />
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model="form.telefone" label="Telefone" />
+                      <v-text-field
+                        v-model="form.telefone"
+                        label="Telefone"
+                        @update:model-value="onTelefoneInput"
+                      />
                     </v-col>
                   </v-row>
                 </v-card-text>
@@ -334,6 +342,7 @@ import { useBrandingStore } from '../stores/brandingStore'
 import { useModulesStore } from '../stores/modulesStore'
 import { useUsersStore } from '../stores/usersStore'
 import { notificationsStore } from '../stores/notificationsStore'
+import { maskCNPJ, maskPhone } from '../utils/formatters'
 
 const { branding, salvarBranding } = useBrandingStore()
 const modulesStore = useModulesStore()
@@ -516,6 +525,14 @@ const savePermissions = async () => {
   if (!selectedUser.value) return
   await usersStore.savePermissions(selectedUser.value.id, editablePermissions.value)
   permissionsDialog.value = false
+}
+
+const onCnpjInput = (value: string) => {
+  form.value.cnpj = maskCNPJ(value || '')
+}
+
+const onTelefoneInput = (value: string) => {
+  form.value.telefone = maskPhone(value || '')
 }
 
 const salvar = async () => {

@@ -1,10 +1,14 @@
 ﻿<template>
   <v-container fluid class="page">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Empreendimentos</h2>
-        <p class="summary-text">{{ empreendimentos.length }} empreendimentos cadastrados</p>
+    <div class="page-header" :class="{ 'mobile-header': mobile }">
+      <div class="header-main">
+        <div>
+          <h2 class="page-title">Empreendimentos</h2>
+          <p v-if="!mobile" class="summary-text">{{ empreendimentos.length }} cadastrados</p>
+        </div>
+        <v-btn v-if="mobile" color="primary" to="/imoveis/novo" icon="mdi-plus" flat />
       </div>
+
       <div class="header-actions">
         <v-text-field
           v-if="!mobile"
@@ -18,7 +22,7 @@
         />
         <v-menu v-if="mobile" v-model="searchMenu" :close-on-content-click="false" location="bottom start">
           <template #activator="{ props }">
-            <v-btn v-bind="props" icon variant="tonal" color="primary" aria-label="Pesquisar">
+            <v-btn v-bind="props" icon variant="tonal" class="action-icon-btn" aria-label="Pesquisar">
               <v-icon icon="mdi-magnify" />
             </v-btn>
           </template>
@@ -42,12 +46,13 @@
           @reset="resetColumns"
           @select-all="selectAllColumns"
         />
-        <v-btn color="primary" to="/imoveis/novo" class="text-none action-btn">
+        <v-btn v-if="!mobile" color="primary" to="/imoveis/novo" class="text-none action-btn">
           <v-icon start icon="mdi-plus"></v-icon>
-          Novo Empreendimento
+          Criar Novo
         </v-btn>
       </div>
     </div>
+
 
     <v-card elevation="2" class="table-card">
       <v-skeleton-loader
@@ -126,7 +131,7 @@
           <p class="text-h6 text-grey-darken-1 mb-2">Você ainda não tem Empreendimentos</p>
           <p class="text-body-2 text-grey mb-6">Cadastre seu primeiro empreendimento aqui</p>
           <v-btn color="primary" to="/imoveis/novo" prepend-icon="mdi-plus">
-            Novo Empreendimento
+            Criar Novo
           </v-btn>
         </div>
       </template>
@@ -341,27 +346,14 @@ onMounted(() => {
   text-align: center;
 }
 @media (max-width: 960px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .header-actions {
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
     padding-bottom: 0.2rem;
-    align-items: center;
   }
 
   .header-actions :deep(.v-btn),
   .header-actions :deep(.v-menu),
   .header-actions :deep(.column-manager-menu) {
     flex-shrink: 0;
-  }
-
-  .header-actions .action-btn {
-    min-width: max-content;
   }
 }
 </style>
