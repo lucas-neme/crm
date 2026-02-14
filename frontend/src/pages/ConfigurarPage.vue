@@ -201,7 +201,7 @@
               </v-card>
 
               <v-card elevation="2" class="form-card logo-card mt-4">
-                <v-card-title class="section-title">Foto do Proprietário</v-card-title>
+                <v-card-title class="section-title">Foto de Capa</v-card-title>
                 <v-card-text class="logo-card-content">
                   <input
                     ref="ownerPhotoInput"
@@ -212,7 +212,7 @@
                   />
 
                   <div v-if="!form.ownerPhotoUrl && !ownerPreviewUrl" class="logo-section">
-                    <p class="logo-title">Adicione a foto principal do proprietário</p>
+                    <p class="logo-title">Adicione a foto de capa</p>
                     <div class="logo-empty-state">
                       <v-icon icon="mdi-account-box-plus-outline" size="24" color="primary" />
                       <p>Envie uma foto para exibir na tela de login</p>
