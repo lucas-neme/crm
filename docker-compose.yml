@@ -1,24 +1,6 @@
 version: "3.8"
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: crm-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Davi_123
-      POSTGRES_DB: crm
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d crm"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - crm-network
-
   backend:
     build:
       context: ./backend
@@ -36,15 +18,13 @@ services:
       SMTP_USER: ""
       SMTP_PASS: ""
       SMTP_FROM: ""
-      DB_HOST: postgres
-      DB_PORT: 5432
+      # Apontando para o banco externo conforme seu .env local
+      DB_HOST: wampa.com.br
+      DB_PORT: 5433
       DB_USERNAME: postgres
       DB_PASSWORD: Davi_123
       DB_DATABASE: crm
       DB_NAME: crm
-    depends_on:
-      postgres:
-        condition: service_healthy
     ports:
       - "3000:3000"
     networks:
@@ -62,9 +42,6 @@ services:
     networks:
       - crm-network
       - proxynet
-
-volumes:
-  postgres_data:
 
 networks:
   crm-network:
