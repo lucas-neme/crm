@@ -143,7 +143,7 @@ const parseCurrency = (value: string) => {
         const parts = sanitized.split('.')
         if (parts.length > 2) {
             normalized = parts.join('')
-        } else if (parts.length === 2 && parts[1].length > 2) {
+        } else if (parts.length === 2 && (parts[1]?.length ?? 0) > 2) {
             normalized = parts.join('')
         }
     }
