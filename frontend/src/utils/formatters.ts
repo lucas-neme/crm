@@ -31,24 +31,13 @@ export function formatTelefone(telefone: string | number | undefined): string {
  */
 export function maskPhone(value: string): string {
   if (!value) return ''
-
-  // Remove tudo que não é dígito e limita a 11 números
   const numbers = value.replace(/\D/g, '').substring(0, 11)
-
   if (numbers.length === 0) return ''
-
-  // (XX
   if (numbers.length <= 2) return `(${numbers}`
-
-  // (XX) XXXX...
   if (numbers.length <= 6) return `(${numbers.substring(0, 2)}) ${numbers.substring(2)}`
-
-  // (XX) XXXX-XXXX (Para fixo ou celular incompleto)
   if (numbers.length <= 10) {
     return `(${numbers.substring(0, 2)}) ${numbers.substring(2, 6)}-${numbers.substring(6)}`
   }
-
-  // (XX) XXXXX-XXXX (Para celular completo)
   return `(${numbers.substring(0, 2)}) ${numbers.substring(2, 7)}-${numbers.substring(7)}`
 }
 
@@ -71,10 +60,11 @@ export function maskCPF(value: string): string {
  */
 export function maskCNPJ(value: string): string {
   const v = value.replace(/\D/g, '').substring(0, 14)
-  return v.replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2')
+  if (v.length <= 2) return v
+  if (v.length <= 5) return v.replace(/(\d{2})(\d{1,3})/, '$1.$2')
+  if (v.length <= 8) return v.replace(/(\d{2})(\d{3})(\d{1,3})/, '$1.$2.$3')
+  if (v.length <= 12) return v.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, '$1.$2.$3/$4')
+  return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5')
 }
 
 /**

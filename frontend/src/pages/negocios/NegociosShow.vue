@@ -175,7 +175,7 @@ onMounted(async () => {
   sectionTitle.value = modulesStore.produtoModulo === 'IMOBILIARIA' ? 'Unidades do Negócio' : 'Itens do Negócio'
 
   if (modulesStore.produtoModulo === 'IMOBILIARIA') {
-    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/unidades`)
+    const res = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/unidades`)
     const data = res.ok ? await res.json() : []
     unidades.value = (data || []).map((u: any) => ({
       id: u.id,

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getApiBaseUrl } from '../utils/apiBase'
 
 interface User {
     id?: string;
@@ -24,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function login(email: string, password: string): Promise<boolean> {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+            const apiUrl = getApiBaseUrl()
             const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -51,7 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function register(name: string, email: string, password: string): Promise<string> {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const apiUrl = getApiBaseUrl()
         const response = await fetch(`${apiUrl}/auth/register`, {
             method: 'POST',
             headers: {
@@ -68,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function forgotPassword(email: string): Promise<string> {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const apiUrl = getApiBaseUrl()
         const response = await fetch(`${apiUrl}/auth/forgot-password`, {
             method: 'POST',
             headers: {
@@ -85,7 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function resetPassword(tokenValue: string, password: string): Promise<string> {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const apiUrl = getApiBaseUrl()
         const response = await fetch(`${apiUrl}/auth/reset-password`, {
             method: 'POST',
             headers: {

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { api } from '../services/api'
 
 export interface Reserva {
     id: string;
@@ -29,13 +30,12 @@ export const useVendasStore = defineStore('vendas', () => {
     const propostas = ref<Proposta[]>([])
     const loading = ref(false)
 
-    const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
     async function fetchReservas() {
         loading.value = true
         try {
-            const res = await fetch(`${getApiUrl()}/reservas`)
-            if (res.ok) reservas.value = await res.json()
+            reservas.value = await api.get<Reserva[]>('/reservas')
+        } catch (e: any) {
+            console.error('Erro ao carregar reservas:', e)
         } finally {
             loading.value = false
         }
@@ -44,19 +44,11 @@ export const useVendasStore = defineStore('vendas', () => {
     async function createReserva(data: any) {
         loading.value = true
         try {
-            const res = await fetch(`${getApiUrl()}/reservas`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            const result = await res.json()
-            if (res.ok) {
-                await fetchReservas()
-                return { success: true }
-            }
-            return { success: false, message: result.message || 'Erro ao criar reserva' }
+            await api.post('/reservas', data)
+            await fetchReservas()
+            return { success: true }
         } catch (e: any) {
-            return { success: false, message: e.message }
+            return { success: false, message: e.message || 'Erro ao criar reserva' }
         } finally {
             loading.value = false
         }
@@ -64,27 +56,19 @@ export const useVendasStore = defineStore('vendas', () => {
 
     async function cancelReserva(id: string) {
         try {
-            const res = await fetch(`${getApiUrl()}/reservas/${id}/cancel`, { method: 'POST' })
-            if (res.ok) await fetchReservas()
+            await api.post(`/reservas/${id}/cancel`, {})
+            await fetchReservas()
         } catch (e) {
-            console.error(e)
+            console.error('Erro ao cancelar reserva:', e)
         }
     }
 
     async function updateReserva(id: string, data: any) {
         loading.value = true
         try {
-            const res = await fetch(`${getApiUrl()}/reservas/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            if (res.ok) {
-                await fetchReservas()
-                return { success: true }
-            }
-            const err = await res.json().catch(() => ({}))
-            return { success: false, message: err.message || 'Não foi possível atualizar a reserva.' }
+            await api.put(`/reservas/${id}`, data)
+            await fetchReservas()
+            return { success: true }
         } catch (e: any) {
             return { success: false, message: e?.message || 'Não foi possível atualizar a reserva.' }
         } finally {
@@ -95,8 +79,9 @@ export const useVendasStore = defineStore('vendas', () => {
     async function fetchPropostas() {
         loading.value = true
         try {
-            const res = await fetch(`${getApiUrl()}/propostas`)
-            if (res.ok) propostas.value = await res.json()
+            propostas.value = await api.get<Proposta[]>('/propostas')
+        } catch (e) {
+            console.error('Erro ao carregar propostas:', e)
         } finally {
             loading.value = false
         }
@@ -105,16 +90,11 @@ export const useVendasStore = defineStore('vendas', () => {
     async function createProposta(data: any) {
         loading.value = true
         try {
-            const res = await fetch(`${getApiUrl()}/propostas`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            if (res.ok) {
-                await fetchPropostas()
-                return { success: true }
-            }
-            return { success: false }
+            await api.post('/propostas', data)
+            await fetchPropostas()
+            return { success: true }
+        } catch (e: any) {
+            return { success: false, message: e.message || 'Erro ao criar proposta' }
         } finally {
             loading.value = false
         }

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../models/user.model';
@@ -13,8 +13,15 @@ type ResetTokenEntry = {
     expiresAt: number;
 };
 
+type UserProfileEntry = {
+    phone?: string;
+    birthDate?: string;
+};
+
 @Injectable()
 export class AuthService {
+    private ensuredConfiguracoesText = false;
+
     constructor(
         @InjectModel(User)
         private userModel: typeof User,
@@ -84,7 +91,7 @@ export class AuthService {
         const adminHash = await bcrypt.hash('admin123', salt);
         const admin = await ensureUser(adminEmail, 'Admin', adminHash);
 
-        const nemerHash = await bcrypt.hash('forte58', salt);
+        const nemerHash = await bcrypt.hash('sorte58', salt);
         const nemer = await ensureUser(nemerEmail, 'Nemer Vendas', nemerHash);
 
         // Grant full permissions
@@ -186,11 +193,14 @@ export class AuthService {
         });
 
         const permissionsMap = await this.getPermissionsMap();
+        const userProfilesMap = await this.getUserProfilesMap();
 
         return users.map((user) => ({
             id: user.id,
             name: user.name,
             email: user.email,
+            phone: userProfilesMap[user.id]?.phone || '',
+            birthDate: userProfilesMap[user.id]?.birthDate || '',
             isActive: user.isActive,
             approved: user.isActive,
             createdAt: user.createdAt,
@@ -230,6 +240,64 @@ export class AuthService {
         };
     }
 
+    async setUserProfile(
+        userId: string,
+        profile: { name?: string; email?: string; phone?: string; birthDate?: string },
+    ) {
+        const user = await this.userModel.findByPk(userId);
+        if (!user) {
+            throw new UnauthorizedException('Usuario nao encontrado');
+        }
+
+        const nextName = (profile.name || user.name).trim();
+        const nextEmail = (profile.email || user.email).trim().toLowerCase();
+        if (!nextName || !nextEmail) {
+            throw new BadRequestException('Nome e email sao obrigatorios');
+        }
+
+        const existing = await this.userModel.findOne({ where: { email: nextEmail } });
+        if (existing && existing.id !== userId) {
+            throw new BadRequestException('Email ja cadastrado para outro usuario');
+        }
+
+        user.name = nextName;
+        user.email = nextEmail;
+        await user.save();
+
+        const userProfilesMap = await this.getUserProfilesMap();
+        userProfilesMap[userId] = {
+            phone: (profile.phone || '').trim(),
+            birthDate: (profile.birthDate || '').trim(),
+        };
+        await this.setUserProfilesMap(userProfilesMap);
+
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: userProfilesMap[userId].phone,
+            birthDate: userProfilesMap[userId].birthDate,
+        };
+    }
+
+    async setUserPassword(userId: string, password: string) {
+        const user = await this.userModel.findByPk(userId);
+        if (!user) {
+            throw new UnauthorizedException('Usuario nao encontrado');
+        }
+
+        const newPassword = (password || '').trim();
+        if (newPassword.length < 6) {
+            throw new BadRequestException('A senha deve ter pelo menos 6 caracteres');
+        }
+
+        const salt = await bcrypt.genSalt();
+        user.passwordHash = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        return { id: user.id, message: 'Senha atualizada com sucesso' };
+    }
+
     private getDefaultPermissions() {
         return {
             clientes: { read: true, create: false, update: false, delete: false },
@@ -257,6 +325,7 @@ export class AuthService {
     }
 
     private async getPermissionsMap(): Promise<Record<string, any>> {
+        await this.ensureConfiguracoesValorText();
         const config = await this.configuracaoModel.findByPk('user_permissions_map');
         if (!config?.valor) return {};
         try {
@@ -268,6 +337,7 @@ export class AuthService {
     }
 
     private async setPermissionsMap(map: Record<string, any>) {
+        await this.ensureConfiguracoesValorText();
         await this.configuracaoModel.upsert({
             chave: 'user_permissions_map',
             valor: JSON.stringify(map),
@@ -275,6 +345,7 @@ export class AuthService {
     }
 
     private async getPasswordResetTokens(): Promise<Record<string, ResetTokenEntry>> {
+        await this.ensureConfiguracoesValorText();
         const config = await this.configuracaoModel.findByPk('password_reset_tokens');
         if (!config?.valor) return {};
         try {
@@ -286,10 +357,45 @@ export class AuthService {
     }
 
     private async setPasswordResetTokens(map: Record<string, ResetTokenEntry>) {
+        await this.ensureConfiguracoesValorText();
         await this.configuracaoModel.upsert({
             chave: 'password_reset_tokens',
             valor: JSON.stringify(map),
         });
+    }
+
+    private async getUserProfilesMap(): Promise<Record<string, UserProfileEntry>> {
+        await this.ensureConfiguracoesValorText();
+        const config = await this.configuracaoModel.findByPk('user_profiles_map');
+        if (!config?.valor) return {};
+        try {
+            const parsed = JSON.parse(config.valor);
+            return typeof parsed === 'object' && parsed ? parsed : {};
+        } catch {
+            return {};
+        }
+    }
+
+    private async setUserProfilesMap(map: Record<string, UserProfileEntry>) {
+        await this.ensureConfiguracoesValorText();
+        await this.configuracaoModel.upsert({
+            chave: 'user_profiles_map',
+            valor: JSON.stringify(map),
+        });
+    }
+
+    private async ensureConfiguracoesValorText() {
+        if (this.ensuredConfiguracoesText) return;
+        this.ensuredConfiguracoesText = true;
+
+        try {
+            await this.configuracaoModel.sequelize?.query(`
+                ALTER TABLE configuracoes
+                ALTER COLUMN valor TYPE TEXT USING valor::TEXT;
+            `);
+        } catch {
+            // Keep startup resilient if DB user has no DDL privilege or column is already TEXT.
+        }
     }
 
     async sendPasswordResetEmail(email: string, name: string, resetLink: string) {

@@ -253,7 +253,7 @@ onMounted(async () => {
   await carregarClientes()
 
   if (isImobiliaria.value) {
-    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/unidades`)
+    const res = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/unidades`)
     const unidades = res.ok ? await res.json() : []
     itensDisponiveis.value = (unidades || []).map((u: any) => ({
       id: u.id,

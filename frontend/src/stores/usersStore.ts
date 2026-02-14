@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useAuthStore } from './authStore'
+import { getApiBaseUrl } from '../utils/apiBase'
 
 export interface UserPermissions {
   [module: string]: {
@@ -14,6 +16,8 @@ export interface ManagedUser {
   id: string
   name: string
   email: string
+  phone?: string
+  birthDate?: string
   isActive: boolean
   approved: boolean
   createdAt?: string
@@ -21,11 +25,11 @@ export interface ManagedUser {
   permissions: UserPermissions
 }
 
-const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const getApiUrl = () => getApiBaseUrl()
 
 const getAuthHeaders = () => {
-  const authRaw = localStorage.getItem('auth')
-  const token = authRaw ? JSON.parse(authRaw).token : null
+  const authStore = useAuthStore()
+  const token = authStore.token
   return {
     'Content-Type': 'application/json',
     Authorization: token ? `Bearer ${token}` : '',
@@ -68,12 +72,49 @@ export const useUsersStore = defineStore('users', () => {
   }
 
   const savePermissions = async (userId: string, permissions: UserPermissions) => {
-    await fetch(`${getApiUrl()}/auth/users/${userId}/permissions`, {
+    const response = await fetch(`${getApiUrl()}/auth/users/${userId}/permissions`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ permissions }),
     })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data?.message || 'Nao foi possivel salvar as permissoes')
+    }
+
     await fetchUsers()
+  }
+
+  const updateProfile = async (
+    userId: string,
+    payload: { name: string; email: string; phone?: string; birthDate?: string },
+  ) => {
+    const response = await fetch(`${getApiUrl()}/auth/users/${userId}/profile`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data?.message || 'Nao foi possivel salvar os dados do usuario')
+    }
+
+    await fetchUsers()
+  }
+
+  const changePassword = async (userId: string, password: string) => {
+    const response = await fetch(`${getApiUrl()}/auth/users/${userId}/change-password`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ password }),
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data?.message || 'Nao foi possivel alterar a senha')
+    }
   }
 
   return {
@@ -83,5 +124,7 @@ export const useUsersStore = defineStore('users', () => {
     approveUser,
     revokeUser,
     savePermissions,
+    updateProfile,
+    changePassword,
   }
 })

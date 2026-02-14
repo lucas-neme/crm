@@ -120,4 +120,21 @@ export class AuthController {
     async setUserPermissions(@Param('id') id: string, @Body() body: { permissions: Record<string, any> }) {
         return this.authService.setUserPermissions(id, body?.permissions || {});
     }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('users/:id/profile')
+    @ApiOperation({ summary: 'Update user profile data' })
+    async setUserProfile(
+        @Param('id') id: string,
+        @Body() body: { name?: string; email?: string; phone?: string; birthDate?: string },
+    ) {
+        return this.authService.setUserProfile(id, body || {});
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('users/:id/change-password')
+    @ApiOperation({ summary: 'Change user password' })
+    async setUserPassword(@Param('id') id: string, @Body() body: { password?: string }) {
+        return this.authService.setUserPassword(id, body?.password || '');
+    }
 }

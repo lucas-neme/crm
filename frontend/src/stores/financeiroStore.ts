@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getApiBaseUrl } from '../utils/apiBase'
 
 export interface Conta {
   id: string
@@ -19,7 +20,7 @@ export const useFinanceiroStore = defineStore('financeiro', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  const getApiUrl = () => getApiBaseUrl()
   const getAuthHeaders = () => {
     const token = localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth') as string).token : null
     return {

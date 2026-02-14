@@ -120,6 +120,12 @@
         </v-card>
       </div>
     </div>
+    <ReservaFromLeadDialog
+      v-model="showReservaDialog"
+      :lead="pendingReservaLead"
+      @confirm="onReservaConfirm"
+      @cancel="onReservaCancel"
+    />
   </v-container>
 </template>
 
@@ -129,6 +135,7 @@ import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useClientesStore } from '../../stores/clientesStore'
 import ColumnManagerMenu from '../../components/common/ColumnManagerMenu.vue'
+import ReservaFromLeadDialog from './ReservaFromLeadDialog.vue'
 
 const router = useRouter()
 const { mobile } = useDisplay()
@@ -139,6 +146,9 @@ const overStageId = ref<string | null>(null)
 const suppressClick = ref(false)
 const search = ref('')
 const searchMenu = ref(false)
+
+const showReservaDialog = ref(false)
+const pendingReservaLead = ref<any>(null)
 
 const allStages = [
   { id: 'NOVO', title: 'Novo Lead', key: 'NOVO', label: 'Novo Lead' },
@@ -226,6 +236,13 @@ const onDrop = async (stageId: string) => {
   if (currentStage === stageId) return
 
   const previousStage = currentStage
+
+  if (stageId === 'RESERVA') {
+    pendingReservaLead.value = lead
+    showReservaDialog.value = true
+    return
+  }
+
   lead.pipelineStage = stageId
 
   try {
@@ -245,6 +262,20 @@ const onDragEnd = () => {
   setTimeout(() => {
     suppressClick.value = false
   }, 40)
+}
+
+const onReservaConfirm = async () => {
+  if (pendingReservaLead.value) {
+    await store.atualizarCliente(pendingReservaLead.value.id, {
+      pipelineStage: 'RESERVA',
+    })
+    await store.carregarClientes()
+    pendingReservaLead.value = null
+  }
+}
+
+const onReservaCancel = () => {
+  pendingReservaLead.value = null
 }
 
 const verDetalhes = (id: string) => {

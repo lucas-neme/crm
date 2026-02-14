@@ -155,6 +155,18 @@ export const useImoveisStore = defineStore('imoveis', () => {
         } catch (e) { console.error(e) }
     }
 
+    async function fetchAllUnidades() {
+        loading.value = true
+        try {
+            const data = await api.get<Unidade[]>('/unidades')
+            unidades.value = data
+        } catch (e: any) {
+            console.error(e)
+        } finally {
+            loading.value = false
+        }
+    }
+
     return {
         empreendimentos,
         currentEmpreendimento,
@@ -167,6 +179,7 @@ export const useImoveisStore = defineStore('imoveis', () => {
         updateEmpreendimento,
         deleteEmpreendimento,
         fetchUnidades,
+        fetchAllUnidades,
         createUnidade,
         updateUnidade,
         updateUnidadeStatus

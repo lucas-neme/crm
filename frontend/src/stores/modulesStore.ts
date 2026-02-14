@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getApiBaseUrl } from '../utils/apiBase'
 
 export const useModulesStore = defineStore('modules', () => {
     const produtoModulo = ref<string>('PADRAO') // PADRAO | IMOBILIARIA
     const loading = ref(false)
 
-    const getApiUrl = () => import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    const getApiUrl = () => getApiBaseUrl()
     const normalizeValue = (raw: any): 'PADRAO' | 'IMOBILIARIA' => {
         const value = String(typeof raw === 'string' ? raw : raw?.valor || '')
             .trim()

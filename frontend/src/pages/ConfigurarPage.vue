@@ -28,6 +28,8 @@
                       <v-text-field
                         v-model="form.cnpj"
                         label="CNPJ"
+                        placeholder="00.000.000/0000-00"
+                        maxlength="18"
                         @update:model-value="onCnpjInput"
                       />
                     </v-col>
@@ -49,6 +51,8 @@
                       <v-text-field
                         v-model="form.telefone"
                         label="Telefone"
+                        placeholder="(00) 00000-0000"
+                        maxlength="15"
                         @update:model-value="onTelefoneInput"
                       />
                     </v-col>
@@ -100,15 +104,100 @@
                 </v-card-text>
               </v-card>
 
+              <v-card elevation="2" class="form-card mb-4">
+                <v-card-title class="section-title d-flex align-center">
+                  <v-icon icon="mdi-shield-lock-outline" class="mr-2" color="primary" />
+                  Segurança
+                </v-card-title>
+                <v-card-text>
+                  <v-btn
+                    v-if="!showPasswordChange"
+                    variant="text"
+                    color="primary"
+                    class="text-none px-0"
+                    prepend-icon="mdi-lock-reset"
+                    @click="showPasswordChange = true"
+                  >
+                    Alterar minha senha
+                  </v-btn>
+
+                  <v-expand-transition>
+                    <div v-if="showPasswordChange" class="mt-4">
+                      <v-row>
+                        <v-col cols="12" md="6">
+                          <v-text-field
+                            v-model="personalPasswordForm.password"
+                            label="Nova senha"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-lock-outline"
+                            hint="Mínimo de 6 caracteres"
+                            persistent-hint
+                          />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-text-field
+                            v-model="personalPasswordForm.confirmPassword"
+                            label="Confirmar nova senha"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-lock-check-outline"
+                          />
+                        </v-col>
+                      </v-row>
+                      <div class="d-flex justify-end mt-4">
+                        <v-btn
+                          variant="text"
+                          class="mr-2 text-none"
+                          @click="showPasswordChange = false"
+                        >
+                          Cancelar
+                        </v-btn>
+                        <v-btn
+                          color="primary"
+                          class="text-none"
+                          :loading="savingPersonalPassword"
+                          @click="savePersonalPassword"
+                        >
+                          Atualizar senha
+                        </v-btn>
+                      </div>
+                    </div>
+                  </v-expand-transition>
+                </v-card-text>
+              </v-card>
+
               <div class="form-actions mt-4">
-                <v-btn color="primary" type="submit">Salvar</v-btn>
-                <v-btn variant="tonal" to="/">Cancelar</v-btn>
+                <v-btn variant="tonal" to="/" class="text-none">Cancelar</v-btn>
+                <v-btn color="primary" type="submit" class="text-none">Salvar</v-btn>
               </div>
             </v-col>
 
             <v-col cols="12" md="4" class="logo-column">
               <v-card elevation="2" class="form-card logo-card">
-                <v-card-title class="section-title">Logo do CRM</v-card-title>
+                <v-card-title class="section-title d-flex align-center justify-space-between">
+                  <span>Logo do CRM</span>
+                  <div v-if="form.logoUrl || previewUrl" class="d-flex align-center">
+                    <v-btn
+                      v-if="!editandoLogo"
+                      icon="mdi-delete"
+                      size="small"
+                      variant="text"
+                      color="error"
+                      class="mr-1"
+                      @click="removerLogo"
+                    />
+                    <v-btn
+                      :icon="editandoLogo ? 'mdi-close' : 'mdi-pencil'"
+                      size="small"
+                      variant="text"
+                      color="primary"
+                      @click="editandoLogo ? cancelarEdicaoLogo() : iniciarEdicaoLogo()"
+                    />
+                  </div>
+                </v-card-title>
                 <v-card-text class="logo-card-content">
                   <input
                     ref="logoInput"
@@ -128,16 +217,6 @@
                   </div>
 
                   <div v-else class="logo-section">
-                    <div class="d-flex align-center justify-space-between mb-2">
-                      <p class="logo-title mb-0">{{ editandoLogo ? 'Editar logo' : 'Logo atual' }}</p>
-                      <v-btn
-                        :icon="editandoLogo ? 'mdi-close' : 'mdi-pencil'"
-                        size="small"
-                        variant="text"
-                        color="primary"
-                        @click="editandoLogo ? cancelarEdicaoLogo() : iniciarEdicaoLogo()"
-                      />
-                    </div>
 
                     <div
                       class="logo-preview-circle logo-draggable mx-auto"
@@ -160,11 +239,7 @@
                     <div v-if="editandoLogo" class="logo-toolbar">
                       <v-btn color="primary" variant="tonal" @click="abrirSeletorLogo">
                         <v-icon icon="mdi-image-edit" class="mr-2" />
-                        Alterar
-                      </v-btn>
-                      <v-btn color="error" variant="tonal" @click="removerLogo">
-                        <v-icon icon="mdi-delete" class="mr-2" />
-                        Remover
+                        Alterar imagem
                       </v-btn>
                     </div>
 
@@ -182,26 +257,46 @@
                         :disabled="!editandoLogo"
                       />
                       <v-btn
-                        variant="text"
+                        variant="tonal"
                         size="small"
-                        class="mt-1"
+                        class="mt-2 text-none btn-recenter"
                         :disabled="!editandoLogo"
                         @click="resetarPosicaoLogo"
+                        density="compact"
                       >
                         Recentralizar imagem
                       </v-btn>
                     </div>
 
                     <div v-if="editandoLogo" class="logo-footer-actions">
-                      <v-btn color="primary" variant="flat" @click="salvarEdicaoLogo">Salvar logo</v-btn>
-                      <v-btn variant="outlined" @click="cancelarEdicaoLogo">Cancelar</v-btn>
+                      <v-btn variant="outlined" class="text-none" @click="cancelarEdicaoLogo">Cancelar</v-btn>
+                      <v-btn color="primary" variant="flat" class="text-none" @click="salvarEdicaoLogo">Salvar logo</v-btn>
                     </div>
                   </div>
                 </v-card-text>
               </v-card>
 
               <v-card elevation="2" class="form-card logo-card mt-4">
-                <v-card-title class="section-title">Foto de Capa</v-card-title>
+                <v-card-title class="section-title d-flex align-center justify-space-between">
+                  <span>Foto de Capa</span>
+                  <div v-if="form.ownerPhotoUrl || ownerPreviewUrl" class="d-flex align-center">
+                    <v-btn
+                      icon="mdi-delete"
+                      size="small"
+                      variant="text"
+                      color="error"
+                      class="mr-1"
+                      @click="removerOwnerPhoto"
+                    />
+                    <v-btn
+                      icon="mdi-pencil"
+                      size="small"
+                      variant="text"
+                      color="primary"
+                      @click="abrirSeletorOwnerPhoto"
+                    />
+                  </div>
+                </v-card-title>
                 <v-card-text class="logo-card-content">
                   <input
                     ref="ownerPhotoInput"
@@ -221,7 +316,6 @@
                   </div>
 
                   <div v-else class="logo-section">
-                    <p class="logo-title mb-2">Foto atual</p>
                     <v-img
                       :src="ownerPreviewUrl || form.ownerPhotoUrl"
                       height="240"
@@ -233,16 +327,6 @@
                       label="Nome do proprietário"
                       class="mt-3"
                     />
-                    <div class="logo-toolbar">
-                      <v-btn color="primary" variant="tonal" @click="abrirSeletorOwnerPhoto">
-                        <v-icon icon="mdi-image-edit-outline" class="mr-2" />
-                        Alterar
-                      </v-btn>
-                      <v-btn color="error" variant="tonal" @click="removerOwnerPhoto">
-                        <v-icon icon="mdi-delete-outline" class="mr-2" />
-                        Remover
-                      </v-btn>
-                    </div>
                   </div>
                 </v-card-text>
               </v-card>
@@ -260,6 +344,17 @@
             </v-alert>
 
             <v-data-table :headers="userHeaders" :items="usersStore.users" :loading="usersStore.loading">
+              <template #item.name="{ item }">
+                <v-btn
+                  variant="text"
+                  color="primary"
+                  class="user-link-btn"
+                  @click="openUserProfile(item)"
+                >
+                  {{ item.name }}
+                </v-btn>
+              </template>
+
               <template #item.status="{ item }">
                 <v-chip :color="item.isActive ? 'success' : 'warning'" size="small" variant="flat">
                   {{ item.isActive ? 'Aprovado/Ativo' : 'Pendente/Inativo' }}
@@ -274,6 +369,14 @@
                   class="mr-2"
                   @click="openPermissions(item)"
                 >Permissões</v-btn>
+
+                <v-btn
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  class="mr-2"
+                  @click="openUserProfile(item)"
+                >Perfil</v-btn>
 
                 <v-btn
                   v-if="!item.isActive"
@@ -298,34 +401,161 @@
     </v-window>
 
     <v-dialog v-model="permissionsDialog" max-width="980">
-      <v-card>
-        <v-card-title>Permissões de {{ selectedUser?.name || selectedUser?.email }}</v-card-title>
+      <v-card class="permissions-card">
+        <v-card-title class="permissions-title">
+          <div>
+            <h3>Permissões de {{ selectedUser?.name || selectedUser?.email }}</h3>
+            <p>Controle acesso por módulo com edição rápida por linha.</p>
+          </div>
+          <v-chip color="primary" variant="tonal" size="small">
+            {{ totalEnabledPermissions }} permissões ativas
+          </v-chip>
+        </v-card-title>
+
         <v-card-text>
-          <v-table density="compact">
+          <v-table density="comfortable" class="permissions-table">
             <thead>
               <tr>
                 <th>Módulo</th>
-                <th>Leitura</th>
-                <th>Criação</th>
-                <th>Edição</th>
-                <th>Exclusão</th>
+                <th class="text-center">Leitura</th>
+                <th class="text-center">Criação</th>
+                <th class="text-center">Edição</th>
+                <th class="text-center">Exclusão</th>
+                <th class="text-center">Tudo</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="module in permissionModules" :key="module.key">
-                <td>{{ module.label }}</td>
-                <td><v-checkbox v-model="editablePermissions[module.key].read" hide-details density="compact" /></td>
-                <td><v-checkbox v-model="editablePermissions[module.key].create" hide-details density="compact" /></td>
-                <td><v-checkbox v-model="editablePermissions[module.key].update" hide-details density="compact" /></td>
-                <td><v-checkbox v-model="editablePermissions[module.key].delete" hide-details density="compact" /></td>
+                <td>
+                  <div class="module-cell">
+                    <strong>{{ module.label }}</strong>
+                    <small>{{ rowEnabledCount(module.key) }}/4</small>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <v-checkbox-btn v-model="editablePermissions[module.key].read" color="primary" />
+                </td>
+                <td class="text-center">
+                  <v-checkbox-btn v-model="editablePermissions[module.key].create" color="primary" />
+                </td>
+                <td class="text-center">
+                  <v-checkbox-btn v-model="editablePermissions[module.key].update" color="primary" />
+                </td>
+                <td class="text-center">
+                  <v-checkbox-btn v-model="editablePermissions[module.key].delete" color="primary" />
+                </td>
+                <td class="text-center">
+                  <v-checkbox-btn
+                    :model-value="isRowFullyEnabled(module.key)"
+                    color="primary"
+                    @update:model-value="toggleModuleAll(module.key, $event)"
+                  />
+                </td>
               </tr>
             </tbody>
           </v-table>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
+
+        <v-card-actions class="permissions-actions">
           <v-btn variant="text" @click="permissionsDialog = false">Cancelar</v-btn>
-          <v-btn color="primary" @click="savePermissions">Salvar permissões</v-btn>
+          <v-btn color="primary" :loading="savingPermissions" @click="savePermissions">
+            Salvar permissões
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="userProfileDialog" max-width="700" persistent transition="dialog-bottom-transition">
+      <v-card class="permissions-card modal-elegant">
+        <v-card-title class="permissions-title px-6 pt-6">
+          <div class="d-flex align-center w-100">
+             <div class="modal-icon-container mr-4">
+                <v-icon icon="mdi-account-circle-outline" color="primary" size="24" />
+             </div>
+             <div>
+               <h3 class="text-h5 font-weight-bold mb-0">Dados do usuário</h3>
+               <p class="text-body-2 text-grey-darken-1 mb-0">Visualize e atualize informações pessoais e senha.</p>
+             </div>
+             <v-spacer />
+             <v-btn icon="mdi-close" variant="text" color="grey" @click="userProfileDialog = false" />
+          </div>
+        </v-card-title>
+
+        <v-divider class="mt-4" />
+
+        <v-card-text class="pa-6">
+          <div class="section-group mb-6">
+            <h4 class="text-overline font-weight-bold text-primary mb-4">Informações Pessoais</h4>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="editableUserProfile.name"
+                  label="Nome completo"
+                  variant="outlined"
+                  bg-color="grey-lighten-5"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-account-outline"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="editableUserProfile.email"
+                  label="E-mail"
+                  variant="outlined"
+                  bg-color="grey-lighten-5"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-email-outline"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="editableUserProfile.phone"
+                  label="Telefone"
+                  variant="outlined"
+                  bg-color="grey-lighten-5"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-phone-outline"
+                  placeholder="(00) 00000-0000"
+                  @update:model-value="onUserPhoneInput"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="editableUserProfile.birthDate"
+                  label="Data de nascimento"
+                  type="date"
+                  variant="outlined"
+                  bg-color="grey-lighten-5"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-calendar-outline"
+                />
+              </v-col>
+            </v-row>
+          </div>
+
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-6">
+          <v-spacer />
+          <v-btn
+            variant="tonal"
+            color="grey-darken-1"
+            class="text-none px-6"
+            @click="userProfileDialog = false"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="savingUserProfile"
+            class="text-none px-6"
+            @click="saveUserProfile"
+          >
+            Salvar dados
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -338,6 +568,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useAuthStore } from '../stores/authStore'
 import { useBrandingStore } from '../stores/brandingStore'
 import { useModulesStore } from '../stores/modulesStore'
 import { useUsersStore } from '../stores/usersStore'
@@ -369,6 +600,28 @@ const logoSnapshot = ref({
 const permissionsDialog = ref(false)
 const selectedUser = ref<any>(null)
 const editablePermissions = ref<Record<string, any>>({})
+const savingPermissions = ref(false)
+const userProfileDialog = ref(false)
+const savingUserProfile = ref(false)
+const editableUserProfile = ref({
+  id: '',
+  name: '',
+  email: '',
+  phone: '',
+  birthDate: '',
+})
+const passwordForm = ref({
+  password: '',
+  confirmPassword: '',
+})
+
+// Novos controles para mudança de senha pessoal
+const showPasswordChange = ref(false)
+const savingPersonalPassword = ref(false)
+const personalPasswordForm = ref({
+  password: '',
+  confirmPassword: '',
+})
 
 const permissionModules = [
   { key: 'clientes', label: 'Clientes' },
@@ -380,6 +633,8 @@ const permissionModules = [
   { key: 'financeiro', label: 'Financeiro' },
   { key: 'configuracoes', label: 'Configurações' },
 ]
+
+const permissionActions = ['read', 'create', 'update', 'delete'] as const
 
 const userHeaders = [
   { title: 'Nome', key: 'name' },
@@ -407,11 +662,19 @@ onMounted(async () => {
   await modulesStore.fetchConfig()
   produtoModulo.value = modulesStore.produtoModulo === 'IMOBILIARIA' ? 'IMOBILIARIA' : 'PADRAO'
   await usersStore.fetchUsers()
+  
+  // Garantir que carregue com máscara se já houver dados
+  if (form.value.cnpj) form.value.cnpj = maskCNPJ(form.value.cnpj)
+  if (form.value.telefone) form.value.telefone = maskPhone(form.value.telefone)
 })
 
 const logoPreviewStyle = computed(() => ({
   transform: `translate(${form.value.logoOffsetX || 0}px, ${form.value.logoOffsetY || 0}px) scale(${form.value.logoScale / 100})`,
 }))
+
+const totalEnabledPermissions = computed(() => {
+  return permissionModules.reduce((sum, module) => sum + rowEnabledCount(module.key), 0)
+})
 
 const abrirSeletorLogo = () => {
   logoInput.value?.click()
@@ -521,10 +784,108 @@ const openPermissions = (user: any) => {
   permissionsDialog.value = true
 }
 
+const openUserProfile = (user: any) => {
+  editableUserProfile.value = {
+    id: user.id,
+    name: user.name || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    birthDate: user.birthDate || '',
+  }
+  passwordForm.value = {
+    password: '',
+    confirmPassword: '',
+  }
+  userProfileDialog.value = true
+}
+
 const savePermissions = async () => {
   if (!selectedUser.value) return
-  await usersStore.savePermissions(selectedUser.value.id, editablePermissions.value)
-  permissionsDialog.value = false
+  savingPermissions.value = true
+  try {
+    await usersStore.savePermissions(selectedUser.value.id, editablePermissions.value)
+    permissionsDialog.value = false
+    notificationsStore.notify('Permissões salvas com sucesso.', 'success')
+  } catch (error: any) {
+    notificationsStore.notify(error?.message || 'Não foi possível salvar permissões.', 'error')
+  } finally {
+    savingPermissions.value = false
+  }
+}
+
+const savePersonalPassword = async () => {
+  if (!personalPasswordForm.value.password) {
+    notificationsStore.notify('Digite a nova senha', 'warning')
+    return
+  }
+  if (personalPasswordForm.value.password !== personalPasswordForm.value.confirmPassword) {
+    notificationsStore.notify('As senhas não coincidem', 'error')
+    return
+  }
+
+  savingPersonalPassword.value = true
+  try {
+    const authStore = useAuthStore()
+    if (!authStore.user?.id) throw new Error('Usuário não identificado')
+
+    await usersStore.changePassword(authStore.user.id, personalPasswordForm.value.password)
+
+    notificationsStore.notify('Senha atualizada com sucesso!', 'success')
+    showPasswordChange.value = false
+    personalPasswordForm.value = { password: '', confirmPassword: '' }
+  } catch (error: any) {
+    notificationsStore.notify(error.message || 'Erro ao atualizar senha', 'error')
+  } finally {
+    savingPersonalPassword.value = false
+  }
+}
+
+const onUserPhoneInput = (value: string) => {
+  editableUserProfile.value.phone = maskPhone(value || '')
+}
+
+const saveUserProfile = async () => {
+  if (!editableUserProfile.value.id) return
+  savingUserProfile.value = true
+  try {
+    await usersStore.updateProfile(editableUserProfile.value.id, {
+      name: editableUserProfile.value.name,
+      email: editableUserProfile.value.email,
+      phone: editableUserProfile.value.phone,
+      birthDate: editableUserProfile.value.birthDate,
+    })
+
+    notificationsStore.notify('Dados do usuário atualizados com sucesso.', 'success')
+    userProfileDialog.value = false
+  } catch (error: any) {
+    notificationsStore.notify(error?.message || 'Não foi possível salvar os dados do usuário.', 'error')
+  } finally {
+    savingUserProfile.value = false
+  }
+}
+
+const rowEnabledCount = (moduleKey: string) => {
+  const row = editablePermissions.value[moduleKey] || {}
+  return permissionActions.reduce((acc, action) => acc + (row[action] ? 1 : 0), 0)
+}
+
+const isRowFullyEnabled = (moduleKey: string) => {
+  const row = editablePermissions.value[moduleKey] || {}
+  return permissionActions.every((action) => !!row[action])
+}
+
+const toggleModuleAll = (moduleKey: string, enabled: boolean) => {
+  if (!editablePermissions.value[moduleKey]) {
+    editablePermissions.value[moduleKey] = {
+      read: false,
+      create: false,
+      update: false,
+      delete: false,
+    }
+  }
+  permissionActions.forEach((action) => {
+    editablePermissions.value[moduleKey][action] = enabled
+  })
 }
 
 const onCnpjInput = (value: string) => {
@@ -752,5 +1113,93 @@ const resetarPosicaoLogo = () => {
   gap: 0.6rem;
   justify-content: flex-end;
   margin-top: 0.2rem;
+}
+
+.permissions-card {
+  border-radius: 16px;
+}
+
+.permissions-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.permissions-title h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #102542;
+}
+
+.permissions-title p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.modal-elegant {
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.modal-icon-container {
+  background: rgba(59, 130, 246, 0.1);
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-group {
+  position: relative;
+}
+
+.permissions-table :deep(th) {
+  font-weight: 700;
+  color: #334155;
+}
+
+.permissions-table :deep(tbody tr:hover) {
+  background: #f8fbff;
+}
+
+.module-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.module-cell strong {
+  color: #0f172a;
+}
+
+.module-cell small {
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.permissions-actions {
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem 1rem;
+}
+
+.user-link-btn {
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  justify-content: flex-start;
+  padding-inline: 0;
+  min-width: auto;
+}
+
+.btn-recenter {
+  font-size: 0.875rem !important;
+  color: rgba(0, 0, 0, 0.6) !important;
+  font-weight: 400 !important;
 }
 </style>
