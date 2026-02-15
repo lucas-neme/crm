@@ -4,7 +4,7 @@
       v-model="drawer"
       :permanent="!mobile"
       :temporary="mobile"
-      :width="mobile ? 296 : 232"
+      :width="drawerWidth"
       class="sidebar"
     >
       <template #prepend>
@@ -219,9 +219,14 @@ const { branding } = brandingStore
 const authStore = useAuthStore()
 const modulesStore = useModulesStore()
 
-const { mobile } = useDisplay()
+const { mobile, width } = useDisplay()
 const drawer = ref(!mobile.value)
 const crmLogoUrl = computed(() => (branding.value?.logoUrl || '').trim())
+const drawerWidth = computed(() => {
+  if (!mobile.value) return 232
+  const w = Math.round(width.value * 0.82)
+  return Math.min(300, Math.max(248, w))
+})
 
 watch(mobile, (val) => {
   drawer.value = !val
@@ -273,8 +278,8 @@ function handleLogout() {
 
 <style scoped>
 .layout {
-  height: 100vh !important;
-  width: 100vw !important;
+  height: 100dvh !important;
+  width: 100% !important;
   overflow: hidden !important;
 }
 
@@ -287,6 +292,7 @@ function handleLogout() {
 .sidebar :deep(.v-navigation-drawer__content) {
   display: flex !important;
   flex-direction: column !important;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
 
 .sidebar-footer {
@@ -400,7 +406,7 @@ function handleLogout() {
     linear-gradient(180deg, #d6d9e0 0%, #c9ced7 100%);
   display: flex !important;
   flex-direction: column !important;
-  height: 100vh !important;
+  height: 100dvh !important;
   overflow: hidden !important;
 }
 
@@ -409,6 +415,7 @@ function handleLogout() {
   top: 0;
   z-index: 3;
   padding: 0.6rem 2rem;
+  padding-top: calc(0.6rem + env(safe-area-inset-top));
   background: linear-gradient(90deg, rgba(58, 58, 61, 0.98) 0%, rgba(72, 73, 77, 0.98) 100%);
   border-bottom: 1px solid rgba(215, 177, 111, 0.24);
   backdrop-filter: blur(12px);
@@ -485,7 +492,7 @@ function handleLogout() {
   width: 100%;
   max-width: 1520px;
   margin: 0 auto;
-  padding: 1rem 2rem 2.5rem;
+  padding: 1rem 2rem calc(2.5rem + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, #d4d8df 0%, #c8cdd6 100%);
   border-left: 1px solid rgba(145, 153, 167, 0.35);
   border-right: 1px solid rgba(145, 153, 167, 0.35);
@@ -516,6 +523,10 @@ function handleLogout() {
 :deep(.v-bottom-navigation) {
   background: rgba(11, 13, 20, 0.96) !important;
   border-top: 1px solid rgba(215, 177, 111, 0.25);
+  height: calc(56px + env(safe-area-inset-bottom)) !important;
+  padding-bottom: env(safe-area-inset-bottom);
+  bottom: 0;
+  z-index: 20;
 }
 
 :deep(.v-bottom-navigation .v-btn) {
@@ -579,10 +590,11 @@ function handleLogout() {
     background: linear-gradient(90deg, rgba(58, 58, 61, 0.98) 0%, rgba(72, 73, 77, 0.98) 100%);
     border-bottom: 1px solid rgba(215, 177, 111, 0.2);
     padding: 0.75rem 1rem;
+    padding-top: calc(0.75rem + env(safe-area-inset-top));
   }
 
-  .top-shell.mobile-header .top-brand-logo {
-     background: rgba(215, 177, 111, 0.1);
+.top-shell.mobile-header .top-brand-logo {
+     background: #fff;
      border: 1px solid rgba(215, 177, 111, 0.3);
   }
 
@@ -593,7 +605,7 @@ function handleLogout() {
   }
   
   .mobile-content {
-      padding-bottom: 60px !important; /* Space for bottom nav */
+      padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
   }
 
   .top-row {
@@ -615,13 +627,14 @@ function handleLogout() {
   }
 
   .content {
-    padding: 0.7rem 0.6rem 1rem;
+    padding: 0.7rem 0.6rem calc(1rem + env(safe-area-inset-bottom));
     border-radius: 8px;
   }
 
   .user-area {
-    right: 0.6rem;
-    top: 4px;
+    right: 0.75rem;
+    top: calc(0.7rem + env(safe-area-inset-top));
+    transform: none;
   }
 
   .sidebar-powered {

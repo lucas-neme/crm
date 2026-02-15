@@ -48,21 +48,24 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'leads',
-        name: 'LeadsKanban',
+        name: 'Leads',
         component: LeadsKanban,
+        meta: { title: 'Leads' }
       },
       {
         path: 'financeiro',
         children: [
           {
             path: 'pagar',
-            name: 'ContasPagar',
-            component: ContasPagar
+            name: 'Contas a Pagar',
+            component: ContasPagar,
+            meta: { title: 'Contas a Pagar' }
           },
           {
             path: 'receber',
-            name: 'ContasReceber',
-            component: ContasReceber
+            name: 'Contas a Receber',
+            component: ContasReceber,
+            meta: { title: 'Contas a Receber' }
           }
         ]
       },
@@ -71,23 +74,27 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: '',
-            name: 'ClientesList',
+            name: 'Clientes',
             component: ClientesList,
+            meta: { title: 'Clientes' }
           },
           {
             path: 'novo',
-            name: 'ClientesCreate',
+            name: 'Novo Cliente',
             component: ClientesCreate,
+            meta: { title: 'Novo Cliente' }
           },
           {
             path: ':id/editar',
-            name: 'ClientesEdit',
+            name: 'Editar Cliente',
             component: ClientesEdit,
+            meta: { title: 'Editar Cliente' }
           },
           {
             path: ':id',
-            name: 'ClientesShow',
+            name: 'Detalhes do Cliente',
             component: ClientesShow,
+            meta: { title: 'Detalhes do Cliente' }
           },
         ],
       },
@@ -96,23 +103,27 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: '',
-            name: 'EmpreendimentosList',
+            name: 'Empreendimentos',
             component: ImoveisList,
+            meta: { title: 'Empreendimentos' }
           },
           {
             path: 'novo',
-            name: 'EmpreendimentosCreate',
+            name: 'Novo Empreendimento',
             component: ImoveisCreate,
+            meta: { title: 'Novo Empreendimento' }
           },
           {
             path: ':id/unidades',
-            name: 'EmpreendimentosShow',
+            name: 'Unidades do Empreendimento',
             component: ImoveisShow,
+            meta: { title: 'Unidades' }
           },
           {
             path: ':id/editar',
-            name: 'EmpreendimentosEdit',
+            name: 'Editar Empreendimento',
             component: () => import('../pages/imoveis/ImoveisEdit.vue'),
+            meta: { title: 'Editar Empreendimento' }
           },
           {
             path: ':id',
@@ -125,23 +136,27 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: '',
-            name: 'ProdutosList',
+            name: 'Produtos',
             component: ProdutosList,
+            meta: { title: 'Produtos' }
           },
           {
             path: 'novo',
-            name: 'ProdutosCreate',
+            name: 'Novo Produto',
             component: ProdutosCreate,
+            meta: { title: 'Novo Produto' }
           },
           {
             path: ':id/editar',
-            name: 'ProdutosEdit',
+            name: 'Editar Produto',
             component: ProdutosEdit,
+            meta: { title: 'Editar Produto' }
           },
           {
             path: ':id',
-            name: 'ProdutosShow',
+            name: 'Detalhes do Produto',
             component: ProdutosShow,
+            meta: { title: 'Detalhes do Produto' }
           },
         ],
       },
@@ -150,8 +165,9 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: 'reservas',
-            name: 'ReservasList',
+            name: 'Reservas',
             component: ReservasList,
+            meta: { title: 'Reservas' }
           }
         ]
       },
@@ -160,30 +176,35 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: '',
-            name: 'NegociosList',
+            name: 'Negócios',
             component: NegociosList,
+            meta: { title: 'Negócios' }
           },
           {
             path: 'novo',
-            name: 'NegociosCreate',
+            name: 'Novo Negócio',
             component: NegociosCreate,
+            meta: { title: 'Novo Negócio' }
           },
           {
             path: ':id/editar',
-            name: 'NegociosEdit',
+            name: 'Editar Negócio',
             component: NegociosEdit,
+            meta: { title: 'Editar Negócio' }
           },
           {
             path: ':id',
-            name: 'NegociosShow',
+            name: 'Detalhes do Negócio',
             component: NegociosShow,
+            meta: { title: 'Detalhes do Negócio' }
           },
         ],
       },
       {
         path: 'configurar',
-        name: 'Configurar',
+        name: 'Configurações',
         component: ConfigurarPage,
+        meta: { title: 'Configurações' }
       },
     ],
   },
