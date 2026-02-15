@@ -261,16 +261,16 @@ onMounted(async () => {
 .stats-card {
   padding: 1.5rem;
   border-radius: 16px;
-  background: white;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+  background: linear-gradient(145deg, rgba(26, 28, 38, 0.92) 0%, rgba(16, 18, 27, 0.96) 100%);
+  border: 1px solid rgba(215, 177, 111, 0.2);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.44) !important;
   height: 100%;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .stats-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.5) !important;
 }
 
 @media (max-width: 600px) {
@@ -281,37 +281,37 @@ onMounted(async () => {
 
 .stats-label {
   font-size: 0.9rem;
-  color: #64748b;
+  color: #c4b79e;
   line-height: 1;
 }
 
 .stats-value {
   font-size: 3rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #f4ead8;
   line-height: 1.1;
   margin-bottom: 0.5rem;
 }
 
 .stats-sub {
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: #9d957f;
 }
 
 .stats-header-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #eadfc9;
 }
 
 .border-t {
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .progress-mock {
   width: 80px;
   height: 10px;
-  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  background: linear-gradient(90deg, #d7b16f 0%, #ab7d43 100%);
   border-radius: 5px;
 }
 
@@ -322,10 +322,10 @@ onMounted(async () => {
 }
 
 .section-card {
-  background: white;
+  background: linear-gradient(145deg, rgba(26, 28, 38, 0.92) 0%, rgba(16, 18, 27, 0.96) 100%);
   border-radius: 12px;
   padding: 1.5rem;
-  border: 1px solid #eef2f6;
+  border: 1px solid rgba(215, 177, 111, 0.2);
 }
 
 .section-header {
@@ -335,18 +335,18 @@ onMounted(async () => {
 .section-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #eadfc9;
   margin-bottom: 0.25rem;
 }
 
 .section-desc {
-  color: #64748b;
+  color: #b7aa8f;
   font-size: 0.85rem;
 }
 
 .action-btn-card {
   border-radius: 8px;
-  border-color: #cbd5e1;
+  border-color: rgba(215, 177, 111, 0.24);
   padding: 1.5rem 1rem;
   transition: all 0.2s;
   height: 100%;
@@ -356,31 +356,31 @@ onMounted(async () => {
 }
 
 .action-btn-card:hover {
-  border-color: #3b82f6;
-  background-color: #f8fafc;
+  border-color: rgba(215, 177, 111, 0.44);
+  background-color: rgba(215, 177, 111, 0.06);
 }
 
 .action-btn-label {
   font-weight: 700;
-  color: #1e293b;
+  color: #eadfc9;
   font-size: 0.95rem;
   margin-bottom: 0.25rem;
 }
 
 .action-btn-sub {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #b7aa8f;
 }
 
 .powerbi-placeholder {
   height: 150px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed rgba(215, 177, 111, 0.32);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: #b6ab92;
   font-size: 0.9rem;
-  background-color: #f8fafc;
+  background-color: rgba(215, 177, 111, 0.06);
 }
 </style>

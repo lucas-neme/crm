@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <v-container fluid class="login-screen pa-0">
     <div class="bg-orb bg-orb-a"></div>
     <div class="bg-orb bg-orb-b"></div>
@@ -8,7 +8,8 @@
         <v-sheet class="mobile-card" elevation="0">
           <div class="mobile-brand">
             <div class="mobile-logo-wrap">
-              <img :src="logoSrc" alt="Logo CRM" class="mobile-logo" />
+              <img v-if="logoSrc" :src="logoSrc" alt="Logo CRM" class="mobile-logo" />
+              <v-icon v-else icon="mdi-shield-crown-outline" color="rgba(0,0,0,0.4)" size="48" />
             </div>
             <h1 class="mobile-title">{{ crmName }}</h1>
             <p v-if="slogan" class="mobile-subtitle">{{ slogan }}</p>
@@ -23,7 +24,8 @@
               <h2 class="mobile-form-title">Acesse sua conta</h2>
               <v-text-field
                 v-model="loginEmail"
-                label="Usuário ou e-mail"
+                placeholder="Usuário ou e-mail"
+                persistent-placeholder
                 type="text"
                 prepend-inner-icon="mdi-email-outline"
                 variant="solo"
@@ -33,7 +35,8 @@
               />
               <v-text-field
                 v-model="loginPassword"
-                label="Senha"
+                placeholder="Senha"
+                persistent-placeholder
                 :type="showPassword ? 'text' : 'password'"
                 prepend-inner-icon="mdi-lock-outline"
                 :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -114,7 +117,8 @@
         <div class="brand-block">
           <div class="brand-head">
             <div class="brand-logo-wrap">
-              <img :src="logoSrc" alt="Logo CRM" class="brand-logo" />
+              <img v-if="logoSrc" :src="logoSrc" alt="Logo CRM" class="brand-logo" />
+              <v-icon v-else icon="mdi-shield-crown-outline" color="rgba(0,0,0,0.4)" size="46" />
             </div>
             <div>
               <p class="brand-kicker">Plataforma inteligente</p>
@@ -128,6 +132,7 @@
               <template #error>
                 <div class="owner-fallback">
                   <span class="owner-fallback-tag">Foto do proprietário</span>
+                  <v-icon icon="mdi-account-tie-outline" size="64" color="rgba(255,255,255,0.7)" class="mb-2" />
                   <strong>CRM</strong>
                 </div>
               </template>
@@ -151,10 +156,18 @@
 
           <v-form v-if="mode === 'login'" @submit.prevent="handleLogin" class="auth-form">
             <h3 class="form-title">Acesse sua conta</h3>
-            <v-text-field v-model="loginEmail" label="Usuário ou e-mail" type="text" prepend-inner-icon="mdi-email-outline" required />
+            <v-text-field
+              v-model="loginEmail"
+              placeholder="Usuário ou e-mail"
+              persistent-placeholder
+              type="text"
+              prepend-inner-icon="mdi-email-outline"
+              required
+            />
             <v-text-field
               v-model="loginPassword"
-              label="Senha"
+              placeholder="Senha"
+              persistent-placeholder
               :type="showPassword ? 'text' : 'password'"
               prepend-inner-icon="mdi-lock-outline"
               :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -324,7 +337,11 @@ async function handleLogin() {
     }
     pushStatus('Credenciais inválidas.', 'error')
   } catch (error: any) {
-    pushStatus(error?.message || 'Erro ao realizar login.', 'error')
+    let msg = error?.message || 'Erro ao realizar login.'
+    if (msg === 'Failed to fetch') {
+      msg = 'Não foi possível conectar ao servidor. Verifique sua conexão.'
+    }
+    pushStatus(msg, 'error')
   } finally {
     loading.value = false
   }
@@ -338,7 +355,11 @@ async function handleRegister() {
     pushStatus(message, 'success')
     setMode('login')
   } catch (error: any) {
-    pushStatus(error?.message || 'Erro ao registrar usuário.', 'error')
+    let msg = error?.message || 'Erro ao registrar usuário.'
+    if (msg === 'Failed to fetch') {
+      msg = 'Não foi possível conectar ao servidor. Verifique sua conexão.'
+    }
+    pushStatus(msg, 'error')
   } finally {
     loading.value = false
   }
@@ -351,7 +372,11 @@ async function handleForgotPassword() {
     const message = await authStore.forgotPassword(forgotEmail.value)
     pushStatus(message, 'success')
   } catch (error: any) {
-    pushStatus(error?.message || 'Erro ao solicitar recuperação de senha.', 'error')
+    let msg = error?.message || 'Erro ao solicitar recuperação de senha.'
+    if (msg === 'Failed to fetch') {
+      msg = 'Não foi possível conectar ao servidor. Verifique sua conexão.'
+    }
+    pushStatus(msg, 'error')
   } finally {
     loading.value = false
   }
@@ -365,7 +390,11 @@ async function handleResetPassword() {
     pushStatus(message, 'success')
     setMode('login')
   } catch (error: any) {
-    pushStatus(error?.message || 'Erro ao redefinir senha.', 'error')
+    let msg = error?.message || 'Erro ao redefinir senha.'
+    if (msg === 'Failed to fetch') {
+      msg = 'Não foi possível conectar ao servidor. Verifique sua conexão.'
+    }
+    pushStatus(msg, 'error')
   } finally {
     loading.value = false
   }
@@ -377,7 +406,10 @@ async function handleResetPassword() {
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(1000px 700px at 10% 10%, #d8deec 0%, #eff2f8 40%, #f4f6fb 100%);
+  background:
+    radial-gradient(1200px 620px at 80% 6%, rgba(215, 177, 111, 0.16), transparent 60%),
+    radial-gradient(900px 600px at 0% 90%, rgba(68, 76, 99, 0.35), transparent 58%),
+    linear-gradient(180deg, #0a0b10 0%, #10131c 100%);
 }
 
 .bg-orb {
@@ -393,7 +425,7 @@ async function handleResetPassword() {
   height: 420px;
   top: -130px;
   left: -90px;
-  background: #285ea8;
+  background: rgba(215, 177, 111, 0.35);
 }
 
 .bg-orb-b {
@@ -401,7 +433,7 @@ async function handleResetPassword() {
   height: 360px;
   bottom: -110px;
   right: -80px;
-  background: #7aa8e8;
+  background: rgba(75, 88, 124, 0.45);
 }
 
 .mobile-shell {
@@ -419,9 +451,9 @@ async function handleResetPassword() {
   width: 100%;
   max-width: 420px;
   border-radius: 34px;
-  background: linear-gradient(180deg, #f8f8fc 0%, #f2f4fb 100%);
-  border: 1px solid #e1e5f2;
-  box-shadow: 0 30px 70px rgba(40, 62, 96, 0.18);
+  background: linear-gradient(180deg, #151925 0%, #10131d 100%);
+  border: 1px solid rgba(215, 177, 111, 0.24);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
   padding: 26px 16px 18px;
 }
 
@@ -435,8 +467,8 @@ async function handleResetPassword() {
   height: 92px;
   margin: 0 auto 14px;
   border-radius: 50%;
-  background: #f3f0ec;
-  border: 1px solid #ebe5df;
+  background: radial-gradient(circle at 45% 35%, #f8e7c8 0%, #d2a764 100%);
+  border: 1px solid rgba(215, 177, 111, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -453,37 +485,40 @@ async function handleResetPassword() {
 .mobile-title {
   margin: 0;
   font-size: clamp(2rem, 8vw, 2.6rem);
-  color: #203e6a;
+  color: #f3e8d3;
   font-weight: 800;
   line-height: 1.05;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.05em;
 }
 
 .mobile-subtitle {
   margin: 0.65rem auto 0;
   max-width: 280px;
-  color: #4a596f;
+  color: #c3b8a5;
   font-size: 1.09rem;
   line-height: 1.35;
 }
 
 .mobile-form-card {
   border-radius: 22px;
-  background: #fcfcff;
-  border: 1px solid #e4e8f2;
+  background: rgba(18, 22, 32, 0.9);
+  border: 1px solid rgba(215, 177, 111, 0.22);
   padding: 20px 16px 18px;
 }
 
 .mobile-form-title {
   margin: 0 0 14px;
-  color: #1f3f6c;
+  color: #f2e6d0;
   font-weight: 800;
   font-size: 1.95rem;
   line-height: 1.1;
+  font-family: 'Cinzel', serif;
 }
 
 .forgot-link {
   align-self: center;
-  color: #28589d;
+  color: #d7b16f;
   font-size: 1.03rem;
   text-transform: none;
   letter-spacing: 0;
@@ -494,13 +529,13 @@ async function handleResetPassword() {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 800;
-  box-shadow: 0 12px 24px rgba(35, 93, 169, 0.28);
+  box-shadow: 0 12px 24px rgba(191, 143, 80, 0.35);
 }
 
 .create-label {
   margin: 0;
   text-align: center;
-  color: #4f5d72;
+  color: #bdb19b;
   font-size: 1.02rem;
 }
 
@@ -539,8 +574,8 @@ async function handleResetPassword() {
   width: 86px;
   height: 86px;
   border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 18px 40px rgba(20, 45, 92, 0.18);
+  background: radial-gradient(circle at 45% 35%, #f8e7c8 0%, #d2a764 100%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -558,7 +593,7 @@ async function handleResetPassword() {
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #2f5f9f;
+  color: #d2bc93;
   font-weight: 700;
 }
 
@@ -566,29 +601,31 @@ async function handleResetPassword() {
   margin: 4px 0;
   font-size: clamp(34px, 4vw, 52px);
   line-height: 1;
-  color: #163965;
+  color: #f2e7d3;
   font-weight: 800;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.05em;
 }
 
 .brand-subtitle {
   margin: 0;
-  color: #35537a;
+  color: #c2b59b;
   max-width: 520px;
 }
 
 .owner-card {
   display: grid;
   grid-template-columns: 170px 1fr;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(38, 78, 130, 0.1);
+  background: rgba(20, 23, 33, 0.95);
+  border: 1px solid rgba(215, 177, 111, 0.22);
   border-radius: 22px;
   overflow: hidden;
-  box-shadow: 0 30px 60px rgba(17, 40, 79, 0.15);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
 }
 
 .owner-photo {
   min-height: 220px;
-  background: linear-gradient(160deg, #133664 0%, #2c65aa 100%);
+  background: linear-gradient(160deg, #1f2432 0%, #121722 100%);
 }
 
 .owner-fallback {
@@ -600,8 +637,8 @@ async function handleResetPassword() {
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  background: linear-gradient(140deg, #163965, #2e63a8);
-  color: #fff;
+  background: linear-gradient(140deg, #1d2330, #131826);
+  color: #f0e4d0;
 }
 
 .owner-fallback-tag {
@@ -637,19 +674,19 @@ async function handleResetPassword() {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #2e63a8;
+  color: #d7b16f;
   font-weight: 700;
 }
 
 .owner-name {
   margin: 8px 0 10px;
   font-size: 24px;
-  color: #1a3558;
+  color: #f2e5ce;
 }
 
 .owner-text {
   margin: 0;
-  color: #4b6487;
+  color: #bfb39d;
   line-height: 1.5;
 }
 
@@ -664,9 +701,9 @@ async function handleResetPassword() {
   width: min(520px, 100%);
   border-radius: 22px;
   padding: 22px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(41, 84, 136, 0.12);
-  box-shadow: 0 24px 55px rgba(23, 48, 91, 0.16);
+  background: rgba(17, 21, 31, 0.94);
+  border: 1px solid rgba(215, 177, 111, 0.22);
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.5);
 }
 
 .auth-form {
@@ -678,12 +715,13 @@ async function handleResetPassword() {
 .form-title {
   margin: 0 0 6px;
   font-size: 24px;
-  color: #193a66;
+  color: #f2e6cf;
+  font-family: 'Cinzel', serif;
 }
 
 .helper-text {
   margin: 0;
-  color: #53709a;
+  color: #bcaf97;
   font-size: 13px;
 }
 
@@ -695,13 +733,12 @@ async function handleResetPassword() {
   align-items: center;
   gap: 12px;
   z-index: 10;
-  font-family: 'Inter', sans-serif;
 }
 
 .powered-by-text {
   font-size: 14px;
   font-weight: 700;
-  color: #0f4c81; /* Blue color from image */
+  color: #d2bc93;
   letter-spacing: -0.02em;
 }
 
@@ -709,9 +746,9 @@ async function handleResetPassword() {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: white;
+  background: radial-gradient(circle at 45% 35%, #f8e7c8 0%, #d2a764 100%);
   object-fit: contain;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .powered-by-mobile {
@@ -722,4 +759,43 @@ async function handleResetPassword() {
   gap: 10px;
 }
 
+.auth-form :deep(.v-field) {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+}
+
+.auth-form :deep(.v-field__input),
+.auth-form :deep(.v-label) {
+  color: #f0e7d8 !important;
+}
+
+/* Fix for browser autocomplete/autofill overlapping and background */
+.auth-form :deep(input:-webkit-autofill),
+.auth-form :deep(input:-webkit-autofill:hover),
+.auth-form :deep(input:-webkit-autofill:focus),
+.auth-form :deep(input:-webkit-autofill:active) {
+  -webkit-text-fill-color: #f0e7d8 !important;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: inset 0 0 20px 20px rgba(0,0,0,0) !important;
+}
+
+.auth-form :deep(.v-field--focused .v-label),
+.auth-form :deep(.v-field--dirty .v-label) {
+  opacity: 0 !important; /* Hide label if dirty/focused when using placeholders */
+}
+
+@media (max-width: 960px) {
+  .brand-panel {
+    padding: 20px 14px 8px;
+  }
+
+  .form-panel {
+    padding: 8px 14px 20px;
+  }
+
+  .auth-shell {
+    width: 100%;
+  }
+}
 </style>
+

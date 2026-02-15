@@ -124,6 +124,9 @@
           </div>
         </div>
         <div class="user-area">
+          <v-btn icon variant="text" class="bell-btn" aria-label="Notificações">
+            <v-icon icon="mdi-bell-outline" />
+          </v-btn>
           <v-menu location="bottom end">
             <template #activator="{ props }">
               <v-btn icon variant="text" class="user-trigger" v-bind="props">
@@ -277,9 +280,11 @@ function handleLogout() {
 }
 
 .sidebar {
-  background: linear-gradient(180deg, #172236 0%, #0e1a2e 100%);
-  color: #dbe7f8;
-  border-right: 1px solid rgba(105, 131, 171, 0.25);
+  background:
+    radial-gradient(500px 280px at 0% 0%, rgba(215, 177, 111, 0.12), transparent 62%),
+    linear-gradient(180deg, #0d0f16 0%, #0a0c13 100%);
+  color: #e9ddc6;
+  border-right: 1px solid rgba(215, 177, 111, 0.22);
 }
 
 .sidebar :deep(.v-navigation-drawer__content) {
@@ -288,15 +293,15 @@ function handleLogout() {
 }
 
 .sidebar-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(215, 177, 111, 0.22);
   padding: 0.25rem 0;
 }
 
 .brand {
-  padding: 1.4rem 1.25rem 1rem;
+  padding: 1.2rem 1.1rem 0.9rem;
   font-weight: 700;
-  font-size: 1.2rem;
-  color: #fff;
+  font-size: 1.14rem;
+  color: #f2e6d1;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -311,8 +316,9 @@ function handleLogout() {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: #fff;
+  border: 1px solid rgba(215, 177, 111, 0.46);
+  background: radial-gradient(circle at 50% 40%, #f9e8cb 0%, #d3aa69 100%);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
 }
 
 .brand-logo {
@@ -325,7 +331,7 @@ function handleLogout() {
 .brand-logo-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #2f83ff 0%, #1e5aaf 100%);
+  background: linear-gradient(135deg, #e2c283 0%, #a5763d 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -333,26 +339,40 @@ function handleLogout() {
 
 .brand-text {
   line-height: 1;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.06em;
 }
 
 .nav-item :deep(.v-list-item__prepend) {
   min-width: 26px;
   width: 26px;
   margin-inline-end: 8px;
+  color: #e0c082;
 }
 
 .nav-item :deep(.v-list-item-title) {
   font-weight: 600;
+  color: #e8dcc5;
 }
 
 .sidebar :deep(.v-list-group__items .v-list-item) {
   padding-inline-start: 18px !important;
 }
 
+.sidebar :deep(.v-list-item--active) {
+  background: linear-gradient(90deg, rgba(215, 177, 111, 0.3) 0%, rgba(215, 177, 111, 0.04) 100%) !important;
+  border: 1px solid rgba(215, 177, 111, 0.42);
+}
+
+.sidebar :deep(.v-list-item:hover) {
+  background: rgba(215, 177, 111, 0.11);
+}
+
 .main {
   background:
-    radial-gradient(1200px 600px at 80% -120px, rgba(115, 169, 255, 0.2), transparent 55%),
-    linear-gradient(180deg, #edf3fb 0%, #e7eef7 100%);
+    radial-gradient(1020px 560px at 84% -10%, rgba(215, 177, 111, 0.1), transparent 55%),
+    radial-gradient(900px 700px at 0% 96%, rgba(86, 95, 124, 0.22), transparent 64%),
+    linear-gradient(180deg, #0a0b10 0%, #0e1017 100%);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -364,8 +384,9 @@ function handleLogout() {
   top: 0;
   z-index: 3;
   padding: 0.1rem 4.5rem 0.1rem 2rem;
-  background: rgba(231, 238, 247, 0.82);
-  backdrop-filter: blur(8px);
+  background: rgba(9, 11, 17, 0.78);
+  border-bottom: 1px solid rgba(215, 177, 111, 0.16);
+  backdrop-filter: blur(12px);
 }
 
 .top-row {
@@ -390,14 +411,14 @@ function handleLogout() {
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  border: 1px solid rgba(34, 84, 145, 0.2);
-  background: #fff;
+  border: 1px solid rgba(215, 177, 111, 0.32);
+  background: rgba(215, 177, 111, 0.11);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  color: #1f4f87;
+  color: #d7b16f;
 }
 
 .top-brand-logo-img {
@@ -408,11 +429,13 @@ function handleLogout() {
 }
 
 .top-brand-text {
-  color: #1d3f6c;
+  color: #f0e3c8;
   font-weight: 800;
   font-size: 0.95rem;
   line-height: 1;
   white-space: nowrap;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.06em;
 }
 
 .breadcrumbs-wrap {
@@ -427,6 +450,9 @@ function handleLogout() {
   position: absolute;
   top: 3px;
   right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .content {
@@ -439,13 +465,26 @@ function handleLogout() {
 }
 
 .global-footer {
-  background: linear-gradient(180deg, #e9f2ff 0%, #dbeafe 100%);
-  border-top: 1px solid #bfd6f7;
+  background: linear-gradient(180deg, #10131b 0%, #0d1016 100%);
+  border-top: 1px solid rgba(215, 177, 111, 0.18);
   padding: 0.45rem 2rem;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+:deep(.v-bottom-navigation) {
+  background: rgba(11, 13, 20, 0.96) !important;
+  border-top: 1px solid rgba(215, 177, 111, 0.25);
+}
+
+:deep(.v-bottom-navigation .v-btn) {
+  color: #cdbb95 !important;
+}
+
+:deep(.v-bottom-navigation .v-btn--active) {
+  color: #f0d8ab !important;
 }
 
 .footer-content {
@@ -463,24 +502,32 @@ function handleLogout() {
 
 .footer-company {
   font-size: 0.8rem;
-  color: #1a4f8f;
+  color: #c9b78f;
   font-weight: 600;
 }
 
 .avatar {
-  background: #cedefc;
-  color: #19385e;
+  background: linear-gradient(135deg, #d8bc89 0%, #a97a41 100%);
+  color: #15110b;
   font-weight: 700;
-  border: 1px solid #aabccf;
+  border: 1px solid rgba(215, 177, 111, 0.3);
 }
 
 .user-trigger {
   margin-right: -6px;
 }
 
+.bell-btn {
+  color: #dec38f;
+  border: 1px solid rgba(215, 177, 111, 0.3);
+  background: rgba(215, 177, 111, 0.08);
+}
+
 .user-menu-card {
   border-radius: 12px;
-  border: 1px solid #d6e0ee;
+  border: 1px solid rgba(215, 177, 111, 0.24);
+  background: #141822;
+  color: #f0e8db;
 }
 
 .avatar :deep(img) {
@@ -508,20 +555,20 @@ function handleLogout() {
   }
   
   .top-shell.mobile-header {
-    background: #1e293b; /* Dark blue background for mobile header */
-    border-bottom: 1px solid #334155;
+    background: #0f121a;
+    border-bottom: 1px solid rgba(215, 177, 111, 0.2);
     padding: 0.75rem 1rem;
   }
 
   .top-shell.mobile-header .top-brand-logo {
-     background: transparent;
-     border: none;
+     background: rgba(215, 177, 111, 0.1);
+     border: 1px solid rgba(215, 177, 111, 0.3);
   }
 
   .avatar.mobile-avatar {
-    background: #cbd5e1;
-    color: #0f172a;
-    border: none;
+    background: linear-gradient(135deg, #d8bc89 0%, #a97a41 100%);
+    color: #15110b;
+    border: 1px solid rgba(215, 177, 111, 0.3);
   }
   
   .mobile-content {

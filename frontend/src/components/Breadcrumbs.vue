@@ -66,27 +66,27 @@ const items = computed(() => routeMap[route.name as string] || [])
   font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
-  color: #3b4d66;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(151, 173, 203, 0.45);
+  color: #d8c7a2;
+  background: rgba(215, 177, 111, 0.1);
+  border: 1px solid rgba(215, 177, 111, 0.28);
 }
 
 .crumb:hover {
-  background: rgba(220, 234, 255, 0.9);
-  color: #163258;
+  background: rgba(215, 177, 111, 0.24);
+  color: #f7edda;
 }
 
 .crumb.current {
-  background: linear-gradient(135deg, #1f65bf 0%, #1b4f94 100%);
+  background: linear-gradient(135deg, #d7b16f 0%, #ab7d43 100%);
   border-color: transparent;
-  color: #fff;
+  color: #19130b;
 }
 
 .crumb.home {
-  background: rgba(212, 225, 245, 0.6);
+  background: rgba(215, 177, 111, 0.16);
 }
 
 .divider {
-  color: #7b8ea8;
+  color: rgba(215, 177, 111, 0.8);
 }
 </style>
