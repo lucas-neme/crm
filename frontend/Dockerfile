@@ -21,12 +21,8 @@ RUN pnpm run build
 # Production Stage
 FROM nginx:stable-alpine as production-stage
 
-ARG BACKEND_UPSTREAM=backend:3000
-RUN apk add --no-cache gettext
-
 COPY --from=build-stage /app/dist /usr/share/nginx/html
-COPY nginx.conf.template /tmp/nginx.conf.template
-RUN env BACKEND_UPSTREAM=$BACKEND_UPSTREAM envsubst '$BACKEND_UPSTREAM' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+COPY nginx.conf.template /etc/nginx/nginx.conf
 
 EXPOSE 80
 
