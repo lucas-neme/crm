@@ -1093,7 +1093,7 @@ const salvar = async () => {
   try {
     // 1. Salvar branding
     // Construct address summary for compatibility
-    const parts = []
+    const parts: string[] = []
     if (form.value.logradouro) parts.push(form.value.logradouro)
     if (form.value.numero) parts.push(form.value.numero)
     if (form.value.complemento) parts.push(form.value.complemento)
