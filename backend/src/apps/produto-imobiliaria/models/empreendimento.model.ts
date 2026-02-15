@@ -20,6 +20,14 @@ export class Empreendimento extends Model {
     })
     nome: string;
 
+    @Default('default')
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        field: 'tenant_id',
+    })
+    tenantId: string;
+
     @Column({
         type: DataType.ENUM('LANCAMENTO', 'EM_OBRAS', 'PRONTO', 'ESGOTADO'),
         defaultValue: 'LANCAMENTO',

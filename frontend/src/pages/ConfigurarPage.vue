@@ -3,13 +3,16 @@
     <div class="page-header">
       <div>
         <h2>Configurações do CRM</h2>
-        <p class="subtitle">Personalize identidade, tipo de CRM e permissões de acesso</p>
+        <p class="subtitle">
+          Personalize identidade<span v-if="isSystemAdmin">, tipo de CRM e permissões de acesso</span>
+        </p>
       </div>
     </div>
 
     <v-tabs v-model="activeTab" class="mb-4" color="primary">
       <v-tab value="geral">Geral</v-tab>
-      <v-tab value="usuarios">Usuários</v-tab>
+      <v-tab v-if="isSystemAdmin" value="admin">Administração</v-tab>
+      <v-tab v-if="isSystemAdmin" value="usuarios">Usuários</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
@@ -70,37 +73,6 @@
                     auto-grow
                     hide-details="auto"
                   />
-                </v-card-text>
-              </v-card>
-
-              <v-card elevation="2" class="form-card mb-4">
-                <v-card-title class="section-title">Configurações de Módulos</v-card-title>
-                <v-card-text>
-                  <v-alert
-                    v-if="erroModulo"
-                    type="error"
-                    variant="tonal"
-                    class="mb-3"
-                    density="comfortable"
-                  >
-                    {{ erroModulo }}
-                  </v-alert>
-                  <v-row>
-                    <v-col cols="12" md="8">
-                      <v-select
-                        v-model="produtoModulo"
-                        :items="[
-                          { title: 'Padrão', value: 'PADRAO' },
-                          { title: 'Imobiliária', value: 'IMOBILIARIA' }
-                        ]"
-                        item-title="title"
-                        item-value="value"
-                        label="Tipo de CRM"
-                        hint="Define o tipo de CRM utilizado"
-                        persistent-hint
-                      ></v-select>
-                    </v-col>
-                  </v-row>
                 </v-card-text>
               </v-card>
 
@@ -335,7 +307,79 @@
         </v-form>
       </v-window-item>
 
-      <v-window-item value="usuarios">
+      <v-window-item v-if="isSystemAdmin" value="admin">
+        <v-card elevation="2" class="form-card mb-4">
+          <v-card-title class="section-title">Administração de Módulos</v-card-title>
+          <v-card-text>
+            <v-alert
+              v-if="erroModulo"
+              type="error"
+              variant="tonal"
+              class="mb-3"
+              density="comfortable"
+            >
+              {{ erroModulo }}
+            </v-alert>
+
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="produtoModulo"
+                  :items="[
+                    { title: 'Padrão', value: 'PADRAO' },
+                    { title: 'Imobiliária', value: 'IMOBILIARIA' }
+                  ]"
+                  item-title="title"
+                  item-value="value"
+                  label="Tipo de CRM"
+                  hint="Define se o CRM opera no modo padrão ou imobiliário"
+                  persistent-hint
+                />
+              </v-col>
+            </v-row>
+
+            <v-divider class="my-4" />
+
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-switch v-model="enabledModulesForm.leads" label="Leads" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch v-model="enabledModulesForm.negocios" label="Negócios" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch v-model="enabledModulesForm.produtos" label="Produtos" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch v-model="enabledModulesForm.imoveis" label="Empreendimentos" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch v-model="enabledModulesForm.reservas" label="Reservas" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch v-model="enabledModulesForm.contasPagar" label="Contas a Pagar" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch v-model="enabledModulesForm.contasReceber" label="Contas a Receber" color="primary" hide-details />
+              </v-col>
+            </v-row>
+
+            <div class="d-flex justify-end mt-6">
+              <v-btn
+                color="primary"
+                :loading="salvandoModulo"
+                class="text-none"
+                prepend-icon="mdi-content-save-check"
+                @click="salvarModulo"
+              >
+                Salvar Alterações
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
+
+      <v-window-item v-if="isSystemAdmin" value="usuarios">
         <v-card elevation="2" class="form-card">
           <v-card-title class="section-title">Gestão de Usuários e Permissões</v-card-title>
           <v-card-text>
@@ -367,6 +411,7 @@
                   variant="tonal"
                   color="primary"
                   class="mr-2"
+                  :disabled="item.isSystemAdmin"
                   @click="openPermissions(item)"
                 >Permissões</v-btn>
 
@@ -391,6 +436,7 @@
                   size="small"
                   color="error"
                   variant="flat"
+                  :disabled="item.isSystemAdmin"
                   @click="usersStore.revokeUser(item.id)"
                 >Revogar</v-btn>
               </template>
@@ -576,6 +622,7 @@ import { notificationsStore } from '../stores/notificationsStore'
 import { maskCNPJ, maskPhone } from '../utils/formatters'
 
 const { branding, salvarBranding } = useBrandingStore()
+const authStore = useAuthStore()
 const modulesStore = useModulesStore()
 const usersStore = useUsersStore()
 
@@ -588,7 +635,17 @@ const salvando = ref(false)
 const editandoLogo = ref(false)
 const isDraggingLogo = ref(false)
 const produtoModulo = ref('PADRAO')
+const enabledModulesForm = ref({
+  leads: true,
+  produtos: true,
+  imoveis: true,
+  reservas: true,
+  negocios: true,
+  contasPagar: true,
+  contasReceber: true,
+})
 const erroModulo = ref('')
+const salvandoModulo = ref(false)
 const dragStart = ref({ x: 0, y: 0, offsetX: 0, offsetY: 0 })
 const logoSnapshot = ref({
   logoUrl: '',
@@ -661,7 +718,10 @@ const form = ref({
 onMounted(async () => {
   await modulesStore.fetchConfig()
   produtoModulo.value = modulesStore.produtoModulo === 'IMOBILIARIA' ? 'IMOBILIARIA' : 'PADRAO'
-  await usersStore.fetchUsers()
+  enabledModulesForm.value = { ...modulesStore.enabledModules }
+  if (isSystemAdmin.value) {
+    await usersStore.fetchUsers()
+  }
   
   // Garantir que carregue com máscara se já houver dados
   if (form.value.cnpj) form.value.cnpj = maskCNPJ(form.value.cnpj)
@@ -674,6 +734,10 @@ const logoPreviewStyle = computed(() => ({
 
 const totalEnabledPermissions = computed(() => {
   return permissionModules.reduce((sum, module) => sum + rowEnabledCount(module.key), 0)
+})
+
+const isSystemAdmin = computed(() => {
+  return !!authStore.user?.isSystemAdmin
 })
 
 const abrirSeletorLogo = () => {
@@ -767,6 +831,7 @@ const removerOwnerPhoto = () => {
 }
 
 const openPermissions = (user: any) => {
+  if (user?.isSystemAdmin) return
   selectedUser.value = user
   editablePermissions.value = JSON.parse(JSON.stringify(user.permissions || {}))
 
@@ -825,7 +890,6 @@ const savePersonalPassword = async () => {
 
   savingPersonalPassword.value = true
   try {
-    const authStore = useAuthStore()
     if (!authStore.user?.id) throw new Error('Usuário não identificado')
 
     await usersStore.changePassword(authStore.user.id, personalPasswordForm.value.password)
@@ -901,11 +965,13 @@ const salvar = async () => {
   erroModulo.value = ''
   try {
     salvarBranding(form.value)
-    const saved = await modulesStore.setProdutoModulo(produtoModulo.value)
-    const confirmed = await modulesStore.fetchConfig()
-
-    if (saved !== confirmed || confirmed !== produtoModulo.value) {
-      throw new Error('O tipo de CRM não foi persistido corretamente.')
+    if (isSystemAdmin.value) {
+      await modulesStore.setProdutoModulo(produtoModulo.value)
+      await modulesStore.setEnabledModules(enabledModulesForm.value)
+      const confirmed = await modulesStore.fetchConfig()
+      if (confirmed !== produtoModulo.value) {
+        throw new Error('O tipo de CRM não foi persistido corretamente.')
+      }
     }
 
     localStorage.setItem('crm.showSavedSnackbar', 'true')
@@ -948,6 +1014,27 @@ const onLogoPointerUp = (event: PointerEvent) => {
 const resetarPosicaoLogo = () => {
   form.value.logoOffsetX = 0
   form.value.logoOffsetY = 0
+}
+
+const salvarModulo = async () => {
+  salvandoModulo.value = true
+  erroModulo.value = ''
+  try {
+    await modulesStore.setProdutoModulo(produtoModulo.value)
+    await modulesStore.setEnabledModules(enabledModulesForm.value)
+    await modulesStore.fetchConfig()
+
+    notificationsStore.notify('Configurações de módulos salvas com sucesso.', 'success')
+    
+    // Opcional: Recarregar para aplicar mudanças estruturais se necessário
+    // window.location.reload()
+  } catch (error: any) {
+    console.error(error)
+    erroModulo.value = error.message || 'Não foi possível salvar os módulos.'
+    notificationsStore.notify(erroModulo.value, 'error')
+  } finally {
+    salvandoModulo.value = false
+  }
 }
 </script>
 

@@ -1,15 +1,30 @@
-import { Body, Controller, Get, Param, Post, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Headers, Param, Post, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../services/auth.service';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-@ApiTags('auth')
+@ApiTags('autenticação')
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
+    private resolveTenantId(tenantHeader?: string): string {
+        const value = (tenantHeader || '').trim();
+        return value || 'default';
+    }
+
+    private ensureSystemAdmin(req: any) {
+        const isSystemAdmin = !!req?.user?.isSystemAdmin;
+        const email = String(req?.user?.email || '').toLowerCase();
+        const name = String(req?.user?.name || '').toLowerCase();
+        const hasAdminIdentity = email === 'admin@example.com' || email.startsWith('admin@') || name.includes('admin');
+        if (!isSystemAdmin && !hasAdminIdentity) {
+            throw new ForbiddenException('Apenas o administrador pode realizar esta operacao');
+        }
+    }
+
     @Post('login')
-    @ApiOperation({ summary: 'Login with username/email and password' })
+    @ApiOperation({ summary: 'Login com usuário/e-mail e senha' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -19,12 +34,13 @@ export class AuthController {
             },
         },
     })
-    async login(@Body() req: { email?: string; password?: string }) {
+    async login(@Headers('x-tenant-id') tenantHeader: string, @Body() req: { email?: string; password?: string }) {
         if (!req.email || !req.password) {
             throw new UnauthorizedException('Email and password are required');
         }
 
-        const user = await this.authService.validateUser(req.email, req.password);
+        const tenantId = this.resolveTenantId(tenantHeader);
+        const user = await this.authService.validateUser(req.email, req.password, tenantId);
         if (!user) {
             throw new UnauthorizedException('Credenciais invalidas');
         }
@@ -33,7 +49,7 @@ export class AuthController {
     }
 
     @Post('register')
-    @ApiOperation({ summary: 'Register new user (pending approval)' })
+    @ApiOperation({ summary: 'Cadastrar novo usuário (pendente de aprovação)' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -44,15 +60,15 @@ export class AuthController {
             },
         },
     })
-    async register(@Body() req: { name?: string; email?: string; password?: string }) {
+    async register(@Headers('x-tenant-id') tenantHeader: string, @Body() req: { name?: string; email?: string; password?: string }) {
         if (!req.name || !req.email || !req.password) {
             throw new UnauthorizedException('Name, email and password are required');
         }
-        return this.authService.register(req.name, req.email, req.password);
+        return this.authService.register(req.name, req.email, req.password, this.resolveTenantId(tenantHeader));
     }
 
     @Post('forgot-password')
-    @ApiOperation({ summary: 'Send reset password link by email' })
+    @ApiOperation({ summary: 'Enviar link de redefinição de senha por e-mail' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -61,15 +77,15 @@ export class AuthController {
             },
         },
     })
-    async forgotPassword(@Body() req: { email?: string }) {
+    async forgotPassword(@Headers('x-tenant-id') tenantHeader: string, @Body() req: { email?: string }) {
         if (!req.email) {
             throw new UnauthorizedException('Email is required');
         }
-        return this.authService.requestPasswordReset(req.email);
+        return this.authService.requestPasswordReset(req.email, this.resolveTenantId(tenantHeader));
     }
 
     @Post('reset-password')
-    @ApiOperation({ summary: 'Reset password using token sent by email' })
+    @ApiOperation({ summary: 'Redefinir senha usando token enviado por e-mail' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -87,54 +103,66 @@ export class AuthController {
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @ApiBearerAuth()
     @Get('profile')
-    @ApiOperation({ summary: 'Get current user profile' })
+    @ApiOperation({ summary: 'Obter perfil do usuário atual' })
     getProfile(@Request() req: any) {
         return req.user;
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @ApiBearerAuth()
     @Get('users')
-    @ApiOperation({ summary: 'List users with approval and permissions' })
-    async getUsers() {
-        return this.authService.listUsersWithPermissions();
+    @ApiOperation({ summary: 'Listar usuários com aprovação e permissões' })
+    async getUsers(@Request() req: any) {
+        this.ensureSystemAdmin(req);
+        return this.authService.listUsersWithPermissions(req.user?.tenantId || 'default');
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @ApiBearerAuth()
     @Post('users/:id/approve')
-    @ApiOperation({ summary: 'Approve and activate user' })
-    async approveUser(@Param('id') id: string) {
-        return this.authService.setUserActive(id, true);
+    @ApiOperation({ summary: 'Aprovar e ativar usuário' })
+    async approveUser(@Request() req: any, @Param('id') id: string) {
+        this.ensureSystemAdmin(req);
+        return this.authService.setUserActive(req.user?.tenantId || 'default', id, true);
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @ApiBearerAuth()
     @Post('users/:id/revoke')
-    @ApiOperation({ summary: 'Revoke user access' })
-    async revokeUser(@Param('id') id: string) {
-        return this.authService.setUserActive(id, false);
+    @ApiOperation({ summary: 'Revogar acesso do usuário' })
+    async revokeUser(@Request() req: any, @Param('id') id: string) {
+        this.ensureSystemAdmin(req);
+        return this.authService.setUserActive(req.user?.tenantId || 'default', id, false);
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @ApiBearerAuth()
     @Post('users/:id/permissions')
-    @ApiOperation({ summary: 'Set user permissions by module/action' })
-    async setUserPermissions(@Param('id') id: string, @Body() body: { permissions: Record<string, any> }) {
-        return this.authService.setUserPermissions(id, body?.permissions || {});
+    @ApiOperation({ summary: 'Definir permissões do usuário por módulo/ação' })
+    async setUserPermissions(@Request() req: any, @Param('id') id: string, @Body() body: { permissions: Record<string, any> }) {
+        this.ensureSystemAdmin(req);
+        return this.authService.setUserPermissions(req.user?.tenantId || 'default', id, body?.permissions || {});
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @ApiBearerAuth()
     @Post('users/:id/profile')
-    @ApiOperation({ summary: 'Update user profile data' })
+    @ApiOperation({ summary: 'Atualizar dados do perfil do usuário' })
     async setUserProfile(
+        @Request() req: any,
         @Param('id') id: string,
         @Body() body: { name?: string; email?: string; phone?: string; birthDate?: string },
     ) {
-        return this.authService.setUserProfile(id, body || {});
+        return this.authService.setUserProfile(req.user?.tenantId || 'default', id, body || {});
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @ApiBearerAuth()
     @Post('users/:id/change-password')
-    @ApiOperation({ summary: 'Change user password' })
-    async setUserPassword(@Param('id') id: string, @Body() body: { password?: string }) {
-        return this.authService.setUserPassword(id, body?.password || '');
+    @ApiOperation({ summary: 'Alterar senha do usuário' })
+    async setUserPassword(@Request() req: any, @Param('id') id: string, @Body() body: { password?: string }) {
+        return this.authService.setUserPassword(req.user?.tenantId || 'default', id, body?.password || '');
     }
 }

@@ -7,6 +7,14 @@ import { Produto } from '@/apps/produto/models/produto.model';
   timestamps: false,
 })
 export class NegocioProduto extends Model {
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'tenant_id',
+    defaultValue: 'default',
+  })
+  tenantId: string;
+
   @ForeignKey(() => Negocio)
   @Column({
     type: DataType.UUID,

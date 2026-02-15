@@ -25,14 +25,17 @@ export class GetNegocioByIdHandler implements IQueryHandler<GetNegocioByIdQuery>
   ) { }
 
   async execute(query: GetNegocioByIdQuery): Promise<any> {
-    const { id } = query;
+    const { tenantId, id } = query;
 
-    const negocio = await this.negocioModel.findByPk(id, {
+    const negocio = await this.negocioModel.findOne({
+      where: { id, tenantId },
       attributes: ['id', 'codigo', 'clienteId', 'entrega', 'enderecoEntregaId', 'dataEntrega', 'dataVenda', 'valorFinal', 'descontoGeral'],
       include: [
         {
           model: Cliente,
           attributes: ['id', 'nome'],
+          where: { tenantId },
+          required: false,
         },
       ],
     });
@@ -41,7 +44,7 @@ export class GetNegocioByIdHandler implements IQueryHandler<GetNegocioByIdQuery>
       throw new NotFoundException(await this.i18n.translate('negocio.notFound'));
     }
     const itens = await this.negocioProdutoModel.findAll({
-      where: { negocioId: id },
+      where: { negocioId: id, tenantId },
       attributes: ['negocioId', 'produtoId', 'quantidade', 'valorUnitario', 'desconto'],
     });
 
@@ -49,13 +52,13 @@ export class GetNegocioByIdHandler implements IQueryHandler<GetNegocioByIdQuery>
     const [produtos, unidades] = await Promise.all([
       produtoIds.length > 0
         ? this.produtoModel.findAll({
-          where: { id: { [Op.in]: produtoIds } },
+          where: { id: { [Op.in]: produtoIds }, tenantId },
           attributes: ['id', 'nome', 'valorUnitario'],
         })
         : Promise.resolve([]),
       produtoIds.length > 0
         ? this.unidadeModel.findAll({
-          where: { id: { [Op.in]: produtoIds } },
+          where: { id: { [Op.in]: produtoIds }, tenantId },
           attributes: ['id', 'codigoInterno', 'tipo', 'valorOferta', 'valorTabela'],
         })
         : Promise.resolve([]),

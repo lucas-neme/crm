@@ -20,9 +20,16 @@ export class Negocio extends Model {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    unique: true,
   })
   codigo: number;
+
+  @Default('default')
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'tenant_id',
+  })
+  tenantId: string;
 
   @Column({
     type: DataType.DATE,

@@ -14,9 +14,9 @@ export class DeleteClienteHandler implements ICommandHandler<DeleteClienteComman
   ) {}
 
   async execute(command: DeleteClienteCommand): Promise<boolean> {
-    const { id } = command;
+    const { tenantId, id } = command;
 
-    const cliente = await this.clienteModel.findByPk(id);
+    const cliente = await this.clienteModel.findOne({ where: { id, tenantId } });
 
     if (!cliente) {
       throw new NotFoundException(await this.i18n.translate('cliente.notFound'));

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useModulesStore } from '@/stores/modulesStore'
 import MainLayout from '../layouts/MainLayout.vue'
 
 // Pages
@@ -193,10 +194,35 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  const modulesStore = useModulesStore()
   if (!to.meta.public && !authStore.isAuthenticated) {
     next('/login')
+    return
+  }
+
+  if (!to.meta.public && authStore.isAuthenticated) {
+    if (!modulesStore.loaded) {
+      await modulesStore.fetchConfig()
+    }
+
+    const path = to.path
+    const blocked =
+      (path.startsWith('/leads') && !modulesStore.enabledModules.leads) ||
+      (path.startsWith('/produtos') && !modulesStore.enabledModules.produtos) ||
+      (path.startsWith('/imoveis') && !modulesStore.enabledModules.imoveis) ||
+      (path.startsWith('/vendas/reservas') && !modulesStore.enabledModules.reservas) ||
+      (path.startsWith('/negocios') && !modulesStore.enabledModules.negocios) ||
+      (path.startsWith('/financeiro/pagar') && !modulesStore.enabledModules.contasPagar) ||
+      (path.startsWith('/financeiro/receber') && !modulesStore.enabledModules.contasReceber)
+
+    if (blocked) {
+      next('/')
+      return
+    }
+    
+    next()
   } else {
     next()
   }

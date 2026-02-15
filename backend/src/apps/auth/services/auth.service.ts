@@ -10,6 +10,7 @@ import { Configuracao } from '../../configuracoes/models/configuracao.model';
 
 type ResetTokenEntry = {
     email: string;
+    tenantId: string;
     expiresAt: number;
 };
 
@@ -30,12 +31,13 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async validateUser(identifier: string, pass: string): Promise<any> {
+    async validateUser(identifier: string, pass: string, tenantId: string): Promise<any> {
         const normalized = (identifier || '').trim().toLowerCase();
         const lookup = normalized === 'admin' ? 'admin@example.com' : normalized;
 
         const user = await this.userModel.findOne({
             where: {
+                tenantId,
                 [Op.or]: [
                     { email: lookup },
                     { name: identifier.trim() },
@@ -56,13 +58,21 @@ export class AuthService {
     }
 
     async login(user: any) {
-        const payload = { email: user.email, sub: user.id };
+        const permissionsMap = await this.getPermissionsMap();
+        const configPerms = permissionsMap?.[user.id]?.configuracoes || {};
+        const isSystemAdmin =
+            this.isAdminIdentity(user.email, user.name) ||
+            !!configPerms.update ||
+            (!!configPerms.read && !!configPerms.create && !!configPerms.delete);
+        const payload = { email: user.email, sub: user.id, tenantId: user.tenantId || 'default', isSystemAdmin };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
+                tenantId: user.tenantId || 'default',
+                isSystemAdmin,
             }
         };
     }
@@ -76,12 +86,13 @@ export class AuthService {
         const ensureUser = async (email: string, name: string, passwordHash: string) => {
             let user = await this.userModel.findOne({ where: { email } });
             if (!user) {
-                user = await this.userModel.create({ email, name, passwordHash, isActive: true });
+                user = await this.userModel.create({ email, name, passwordHash, isActive: true, tenantId: 'default' });
                 console.log(`User created: ${email}`);
             } else {
                 user.name = name;
                 user.passwordHash = passwordHash;
                 user.isActive = true;
+                user.tenantId = user.tenantId || 'default';
                 await user.save();
                 console.log(`User updated: ${email}`);
             }
@@ -117,8 +128,8 @@ export class AuthService {
         }
     }
 
-    async register(name: string, email: string, password: string) {
-        const existing = await this.userModel.findOne({ where: { email } });
+    async register(name: string, email: string, password: string, tenantId: string) {
+        const existing = await this.userModel.findOne({ where: { email, tenantId } });
         if (existing) {
             return { message: 'Email ja cadastrado' };
         }
@@ -131,6 +142,7 @@ export class AuthService {
             email,
             passwordHash,
             isActive: false,
+            tenantId,
         });
 
         return {
@@ -139,21 +151,22 @@ export class AuthService {
                 id: user.id,
                 name: user.name,
                 email: user.email,
+                tenantId: user.tenantId,
                 isActive: user.isActive,
             },
         };
     }
 
-    async requestPasswordReset(email: string) {
+    async requestPasswordReset(email: string, tenantId: string) {
         const genericMessage = 'Se o email existir, voce recebera o link para redefinir a senha';
-        const user = await this.userModel.findOne({ where: { email } });
+        const user = await this.userModel.findOne({ where: { email, tenantId } });
         if (!user) return { message: genericMessage };
 
         const token = nodeCrypto.randomUUID();
         const expiresAt = Date.now() + 30 * 60 * 1000;
 
         const tokenMap = await this.getPasswordResetTokens();
-        tokenMap[token] = { email: user.email, expiresAt };
+        tokenMap[token] = { email: user.email, tenantId: user.tenantId || tenantId, expiresAt };
         await this.setPasswordResetTokens(tokenMap);
 
         const frontendBaseUrl = (process.env.FRONTEND_URL || 'https://crm.wampa.com.br').replace(/\/$/, '');
@@ -171,7 +184,7 @@ export class AuthService {
             throw new UnauthorizedException('Token invalido ou expirado');
         }
 
-        const user = await this.userModel.findOne({ where: { email: tokenEntry.email } });
+        const user = await this.userModel.findOne({ where: { email: tokenEntry.email, tenantId: tokenEntry.tenantId } });
         if (!user) {
             throw new UnauthorizedException('Usuario nao encontrado');
         }
@@ -186,8 +199,9 @@ export class AuthService {
         return { message: 'Senha redefinida com sucesso' };
     }
 
-    async listUsersWithPermissions() {
+    async listUsersWithPermissions(tenantId: string) {
         const users = await this.userModel.findAll({
+            where: { tenantId },
             attributes: ['id', 'name', 'email', 'isActive', 'createdAt', 'updatedAt'],
             order: [['createdAt', 'DESC']],
         });
@@ -195,24 +209,39 @@ export class AuthService {
         const permissionsMap = await this.getPermissionsMap();
         const userProfilesMap = await this.getUserProfilesMap();
 
-        return users.map((user) => ({
+        return users.map((user) => {
+            const currentPerms = permissionsMap[user.id] || this.getDefaultPermissions();
+            const configPerms = currentPerms?.configuracoes || {};
+            const isSystemAdmin =
+                this.isProtectedAdmin(user) ||
+                !!configPerms.update ||
+                (!!configPerms.read && !!configPerms.create && !!configPerms.delete);
+
+            return {
+            isSystemAdmin,
             id: user.id,
             name: user.name,
             email: user.email,
+            tenantId: user.tenantId || 'default',
             phone: userProfilesMap[user.id]?.phone || '',
             birthDate: userProfilesMap[user.id]?.birthDate || '',
             isActive: user.isActive,
             approved: user.isActive,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
-            permissions: permissionsMap[user.id] || this.getDefaultPermissions(),
-        }));
+            permissions: isSystemAdmin
+                ? this.getFullPermissions()
+                : currentPerms,
+        }});
     }
 
-    async setUserActive(userId: string, isActive: boolean) {
-        const user = await this.userModel.findByPk(userId);
+    async setUserActive(tenantId: string, userId: string, isActive: boolean) {
+        const user = await this.userModel.findOne({ where: { id: userId, tenantId } });
         if (!user) {
             throw new UnauthorizedException('Usuario nao encontrado');
+        }
+        if (this.isProtectedAdmin(user) && !isActive) {
+            throw new BadRequestException('Nao e permitido revogar o acesso do usuario Admin');
         }
 
         user.isActive = isActive;
@@ -224,10 +253,13 @@ export class AuthService {
         };
     }
 
-    async setUserPermissions(userId: string, permissions: Record<string, any>) {
-        const user = await this.userModel.findByPk(userId);
+    async setUserPermissions(tenantId: string, userId: string, permissions: Record<string, any>) {
+        const user = await this.userModel.findOne({ where: { id: userId, tenantId } });
         if (!user) {
             throw new UnauthorizedException('Usuario nao encontrado');
+        }
+        if (this.isProtectedAdmin(user)) {
+            throw new BadRequestException('Nao e permitido alterar as permissoes do usuario Admin');
         }
 
         const permissionsMap = await this.getPermissionsMap();
@@ -241,10 +273,11 @@ export class AuthService {
     }
 
     async setUserProfile(
+        tenantId: string,
         userId: string,
         profile: { name?: string; email?: string; phone?: string; birthDate?: string },
     ) {
-        const user = await this.userModel.findByPk(userId);
+        const user = await this.userModel.findOne({ where: { id: userId, tenantId } });
         if (!user) {
             throw new UnauthorizedException('Usuario nao encontrado');
         }
@@ -255,7 +288,7 @@ export class AuthService {
             throw new BadRequestException('Nome e email sao obrigatorios');
         }
 
-        const existing = await this.userModel.findOne({ where: { email: nextEmail } });
+        const existing = await this.userModel.findOne({ where: { email: nextEmail, tenantId } });
         if (existing && existing.id !== userId) {
             throw new BadRequestException('Email ja cadastrado para outro usuario');
         }
@@ -275,13 +308,14 @@ export class AuthService {
             id: user.id,
             name: user.name,
             email: user.email,
+            tenantId: user.tenantId || 'default',
             phone: userProfilesMap[userId].phone,
             birthDate: userProfilesMap[userId].birthDate,
         };
     }
 
-    async setUserPassword(userId: string, password: string) {
-        const user = await this.userModel.findByPk(userId);
+    async setUserPassword(tenantId: string, userId: string, password: string) {
+        const user = await this.userModel.findOne({ where: { id: userId, tenantId } });
         if (!user) {
             throw new UnauthorizedException('Usuario nao encontrado');
         }
@@ -396,6 +430,17 @@ export class AuthService {
         } catch {
             // Keep startup resilient if DB user has no DDL privilege or column is already TEXT.
         }
+    }
+
+    private isProtectedAdmin(user: User | null | undefined): boolean {
+        if (!user) return false;
+        return this.isAdminIdentity(user.email, user.name);
+    }
+
+    private isAdminIdentity(emailRaw?: string, nameRaw?: string): boolean {
+        const email = (emailRaw || '').trim().toLowerCase();
+        const name = (nameRaw || '').trim().toLowerCase();
+        return email === 'admin@example.com' || email.startsWith('admin@') || name.includes('admin');
     }
 
     async sendPasswordResetEmail(email: string, name: string, resetLink: string) {

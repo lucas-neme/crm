@@ -26,9 +26,9 @@ export class UpdateNegocioHandler implements ICommandHandler<UpdateNegocioComman
   ) {}
 
   async execute(command: UpdateNegocioCommand): Promise<Negocio> {
-    const { id, data } = command;
+    const { tenantId, id, data } = command;
 
-    const negocio = await this.negocioModel.findByPk(id);
+    const negocio = await this.negocioModel.findOne({ where: { id, tenantId } });
 
     if (!negocio) {
       throw new NotFoundException(await this.i18n.translate('negocio.notFound'));
@@ -43,24 +43,28 @@ export class UpdateNegocioHandler implements ICommandHandler<UpdateNegocioComman
 
     let enderecoEntrega = null;
     if (data.entrega && data.enderecoEntrega) {
-      enderecoEntrega = await this.enderecoModel.create(data.enderecoEntrega as any);
+      enderecoEntrega = await this.enderecoModel.create({
+        ...(data.enderecoEntrega as any),
+        tenantId,
+      } as any);
     }
 
     // Atualizar produtos se fornecidos
     if (data.produtos) {
       // Remover produtos antigos
       await this.negocioProdutoModel.destroy({
-        where: { negocioId: id },
+        where: { negocioId: id, tenantId },
       });
 
       // Adicionar novos produtos
       for (const produto of data.produtos) {
-        let produtoRef = await this.produtoModel.findByPk(produto.produtoId);
+        let produtoRef = await this.produtoModel.findOne({ where: { id: produto.produtoId, tenantId } });
 
         if (!produtoRef) {
-          const unidade = await this.unidadeModel.findByPk(produto.produtoId);
+          const unidade = await this.unidadeModel.findOne({ where: { id: produto.produtoId, tenantId } });
           if (unidade) {
             const ultimoProduto = await this.produtoModel.findOne({
+              where: { tenantId },
               order: [['codigo', 'DESC']],
               raw: true,
             });
@@ -68,6 +72,7 @@ export class UpdateNegocioHandler implements ICommandHandler<UpdateNegocioComman
             produtoRef = await this.produtoModel.create({
               id: unidade.id,
               codigo: novoCodigoProduto,
+              tenantId,
               nome: `Unidade ${unidade.codigoInterno || unidade.id}`,
               quantidade: 1,
               valorUnitario: produto.valorUnitario || (unidade as any).valorOferta || (unidade as any).valorTabela || 0,
@@ -77,6 +82,7 @@ export class UpdateNegocioHandler implements ICommandHandler<UpdateNegocioComman
         }
 
         await this.negocioProdutoModel.create({
+          tenantId,
           negocioId: id,
           produtoId: produtoRef ? produtoRef.id : produto.produtoId,
           quantidade: produto.quantidade,
@@ -94,6 +100,7 @@ export class UpdateNegocioHandler implements ICommandHandler<UpdateNegocioComman
 
     await negocio.update({
       ...data,
+      tenantId,
       enderecoEntregaId: enderecoEntrega?.id || negocio.enderecoEntregaId,
     });
 

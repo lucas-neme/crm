@@ -8,10 +8,13 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { I18nService } from 'nestjs-i18n';
+import { AuthGuard } from '@nestjs/passport';
 import { CreateProdutoDto } from './dto/create-produto.dto';
 import { UpdateProdutoDto } from './dto/update-produto.dto';
 import { CreateProdutoCommand } from './commands/impl/create-produto.command';
@@ -23,6 +26,8 @@ import { BaseResponse } from '@/common/interfaces/base-response.interface';
 import { Produto } from './models/produto.model';
 
 @ApiTags('produtos')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('produtos')
 export class ProdutosController {
   constructor(
@@ -38,9 +43,10 @@ export class ProdutosController {
     description: 'Produto criado com sucesso',
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
-  async create(@Body() createProdutoDto: CreateProdutoDto): Promise<BaseResponse<Produto>> {
+  async create(@Request() req: any, @Body() createProdutoDto: CreateProdutoDto): Promise<BaseResponse<Produto>> {
+    const tenantId = req.user?.tenantId || 'default';
     const produto = await this.commandBus.execute(
-      new CreateProdutoCommand(createProdutoDto),
+      new CreateProdutoCommand(tenantId, createProdutoDto),
     );
 
     return {
@@ -56,8 +62,9 @@ export class ProdutosController {
     status: 200,
     description: 'Lista de produtos',
   })
-  async findAll(): Promise<BaseResponse<Produto[]>> {
-    const produtos = await this.queryBus.execute(new GetAllProdutosQuery());
+  async findAll(@Request() req: any): Promise<BaseResponse<Produto[]>> {
+    const tenantId = req.user?.tenantId || 'default';
+    const produtos = await this.queryBus.execute(new GetAllProdutosQuery(tenantId));
 
     return {
       success: true,
@@ -73,8 +80,9 @@ export class ProdutosController {
     description: 'Produto encontrado',
   })
   @ApiResponse({ status: 404, description: 'Produto não encontrado' })
-  async findOne(@Param('id') id: string): Promise<BaseResponse<Produto>> {
-    const produto = await this.queryBus.execute(new GetProdutoByIdQuery(id));
+  async findOne(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<Produto>> {
+    const tenantId = req.user?.tenantId || 'default';
+    const produto = await this.queryBus.execute(new GetProdutoByIdQuery(tenantId, id));
 
     return {
       success: true,
@@ -91,11 +99,13 @@ export class ProdutosController {
   })
   @ApiResponse({ status: 404, description: 'Produto não encontrado' })
   async update(
+    @Request() req: any,
     @Param('id') id: string,
     @Body() updateProdutoDto: UpdateProdutoDto,
   ): Promise<BaseResponse<Produto>> {
+    const tenantId = req.user?.tenantId || 'default';
     const produto = await this.commandBus.execute(
-      new UpdateProdutoCommand(id, updateProdutoDto),
+      new UpdateProdutoCommand(tenantId, id, updateProdutoDto),
     );
 
     return {
@@ -114,8 +124,9 @@ export class ProdutosController {
     description: 'Produto excluído com sucesso',
   })
   @ApiResponse({ status: 404, description: 'Produto não encontrado' })
-  async remove(@Param('id') id: string): Promise<BaseResponse<boolean>> {
-    await this.commandBus.execute(new DeleteProdutoCommand(id));
+  async remove(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<boolean>> {
+    const tenantId = req.user?.tenantId || 'default';
+    await this.commandBus.execute(new DeleteProdutoCommand(tenantId, id));
 
     return {
       success: true,

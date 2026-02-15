@@ -14,9 +14,9 @@ export class UpdateClienteHandler implements ICommandHandler<UpdateClienteComman
   ) { }
 
   async execute(command: UpdateClienteCommand): Promise<Cliente> {
-    const { id, data } = command;
+    const { tenantId, id, data } = command;
 
-    const cliente = await this.clienteModel.findByPk(id);
+    const cliente = await this.clienteModel.findOne({ where: { id, tenantId } });
 
     if (!cliente) {
       throw new NotFoundException(await this.i18n.translate('cliente.notFound'));
@@ -43,7 +43,7 @@ export class UpdateClienteHandler implements ICommandHandler<UpdateClienteComman
       // Check if email is being updated and if it's already taken
       if (data.email && data.email !== cliente.email) {
         const existingEmail = await this.clienteModel.findOne({
-          where: { email: data.email },
+          where: { email: data.email, tenantId },
         });
         if (existingEmail) {
           throw new BadRequestException('Email já cadastrado');
@@ -53,7 +53,7 @@ export class UpdateClienteHandler implements ICommandHandler<UpdateClienteComman
       // Check if telefone is being updated and if it's already taken
       if (data.telefone && data.telefone !== cliente.telefone) {
         const existingTelefone = await this.clienteModel.findOne({
-          where: { telefone: data.telefone },
+          where: { telefone: data.telefone, tenantId },
         });
         if (existingTelefone) {
           throw new BadRequestException('Telefone já cadastrado');

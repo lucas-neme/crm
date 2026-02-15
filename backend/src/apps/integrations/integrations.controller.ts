@@ -1,12 +1,15 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { InjectModel } from '@nestjs/sequelize';
 import { Cliente } from '../cliente/models/cliente.model';
 import { Negocio } from '../negocio/models/negocio.model';
 import { Produto } from '../produto/models/produto.model';
 import { Op } from 'sequelize';
+import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('integrations')
+@ApiTags('integrações')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('api/integrations')
 export class IntegrationsController {
   constructor(
@@ -24,10 +27,11 @@ export class IntegrationsController {
   @ApiQuery({ name: 'dataInicio', required: false, description: 'Data inicial (YYYY-MM-DD)' })
   @ApiQuery({ name: 'dataFim', required: false, description: 'Data final (YYYY-MM-DD)' })
   async exportClientes(
+    @Request() req: any,
     @Query('dataInicio') dataInicio?: string,
     @Query('dataFim') dataFim?: string,
   ) {
-    const where: any = {};
+    const where: any = { tenantId: req.user?.tenantId || 'default' };
 
     if (dataInicio || dataFim) {
       where.createdAt = {};
@@ -65,10 +69,11 @@ export class IntegrationsController {
   @ApiQuery({ name: 'dataInicio', required: false, description: 'Data inicial de venda (YYYY-MM-DD)' })
   @ApiQuery({ name: 'dataFim', required: false, description: 'Data final de venda (YYYY-MM-DD)' })
   async exportNegocios(
+    @Request() req: any,
     @Query('dataInicio') dataInicio?: string,
     @Query('dataFim') dataFim?: string,
   ) {
-    const where: any = {};
+    const where: any = { tenantId: req.user?.tenantId || 'default' };
 
     if (dataInicio || dataFim) {
       where.dataVenda = {};
@@ -82,10 +87,14 @@ export class IntegrationsController {
         {
           model: Cliente,
           attributes: ['id', 'codigo', 'nome', 'tipoPessoa'],
+          where: { tenantId: req.user?.tenantId || 'default' },
+          required: false,
         },
         {
           model: Produto,
           attributes: ['id', 'nome', 'valorUnitario'],
+          where: { tenantId: req.user?.tenantId || 'default' },
+          required: false,
           through: { attributes: ['quantidade', 'valorUnitario'] },
         },
       ],
@@ -125,8 +134,9 @@ export class IntegrationsController {
   @Get('produtos/export')
   @ApiOperation({ summary: 'Exportar dados de produtos para integração (Power BI/n8n)' })
   @ApiResponse({ status: 200, description: 'Dados exportados com sucesso' })
-  async exportProdutos() {
+  async exportProdutos(@Request() req: any) {
     const produtos = await this.produtoModel.findAll({
+      where: { tenantId: req.user?.tenantId || 'default' },
       attributes: [
         'id',
         'codigo',
@@ -156,10 +166,12 @@ export class IntegrationsController {
   @ApiQuery({ name: 'dataInicio', required: false })
   @ApiQuery({ name: 'dataFim', required: false })
   async dashboardResumo(
+    @Request() req: any,
     @Query('dataInicio') dataInicio?: string,
     @Query('dataFim') dataFim?: string,
   ) {
-    const whereNegocio: any = {};
+    const tenantId = req.user?.tenantId || 'default';
+    const whereNegocio: any = { tenantId };
     
     if (dataInicio || dataFim) {
       whereNegocio.dataVenda = {};
@@ -174,10 +186,10 @@ export class IntegrationsController {
       produtosAtivos,
       negocios,
     ] = await Promise.all([
-      this.clienteModel.count(),
-      this.clienteModel.count({ where: { isActive: true } }),
-      this.produtoModel.count(),
-      this.produtoModel.count({ where: { isActive: true } }),
+      this.clienteModel.count({ where: { tenantId } }),
+      this.clienteModel.count({ where: { tenantId, isActive: true } }),
+      this.produtoModel.count({ where: { tenantId } }),
+      this.produtoModel.count({ where: { tenantId, isActive: true } }),
       this.negocioModel.findAll({
         where: whereNegocio,
         attributes: ['valorFinal', 'dataVenda', 'entrega'],

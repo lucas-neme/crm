@@ -22,13 +22,20 @@ export class Unidade extends Model {
     })
     empreendimentoId: string;
 
+    @Default('default')
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        field: 'tenant_id',
+    })
+    tenantId: string;
+
     @BelongsTo(() => Empreendimento)
     empreendimento: Empreendimento;
 
     @Column({
         field: 'codigo_interno',
         allowNull: false,
-        unique: true,
     })
     codigoInterno: string;
 

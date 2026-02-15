@@ -14,9 +14,10 @@ export class GetClienteByIdHandler implements IQueryHandler<GetClienteByIdQuery>
   ) { }
 
   async execute(query: GetClienteByIdQuery): Promise<Cliente> {
-    const { id } = query;
+    const { tenantId, id } = query;
 
-    const cliente = await this.clienteModel.findByPk(id, {
+    const cliente = await this.clienteModel.findOne({
+      where: { id, tenantId },
       attributes: [
         'id',
         'codigo',

@@ -10,36 +10,40 @@ export class EmpreendimentoService {
         private readonly empreendimentoModel: typeof Empreendimento,
     ) { }
 
-    async create(data: Partial<Empreendimento>): Promise<Empreendimento> {
-        return this.empreendimentoModel.create(data);
+    async create(tenantId: string, data: Partial<Empreendimento>): Promise<Empreendimento> {
+        return this.empreendimentoModel.create({ ...data, tenantId });
     }
 
-    async findAll(): Promise<Empreendimento[]> {
+    async findAll(tenantId: string): Promise<Empreendimento[]> {
         return this.empreendimentoModel.findAll({
+            where: { tenantId },
             order: [['createdAt', 'DESC']],
             include: [
                 {
                     model: Unidade,
                     attributes: ['id', 'statusUnidade'],
+                    where: { tenantId },
+                    required: false,
                 }
             ]
         });
     }
 
-    async findOne(id: string): Promise<Empreendimento> {
-        return this.empreendimentoModel.findByPk(id, {
-            include: [Unidade],
+    async findOne(tenantId: string, id: string): Promise<Empreendimento> {
+        return this.empreendimentoModel.findOne({
+            where: { id, tenantId },
+            include: [{ model: Unidade, where: { tenantId }, required: false }],
         });
     }
 
-    async update(id: string, data: Partial<Empreendimento>): Promise<Empreendimento> {
-        const empreendimento = await this.empreendimentoModel.findByPk(id);
-        if (!empreendimento) throw new Error('Empreendimento não encontrado');
+    async update(tenantId: string, id: string, data: Partial<Empreendimento>): Promise<Empreendimento> {
+        const empreendimento = await this.empreendimentoModel.findOne({ where: { id, tenantId } });
+        if (!empreendimento) throw new Error('Empreendimento nao encontrado');
         return empreendimento.update(data);
     }
 
-    async remove(id: string): Promise<void> {
-        const empreendimento = await this.empreendimentoModel.findByPk(id);
+    async remove(tenantId: string, id: string): Promise<void> {
+        const empreendimento = await this.empreendimentoModel.findOne({ where: { id, tenantId } });
         if (empreendimento) {
             await empreendimento.destroy();
         }

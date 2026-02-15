@@ -14,9 +14,9 @@ export class UpdateProdutoHandler implements ICommandHandler<UpdateProdutoComman
   ) {}
 
   async execute(command: UpdateProdutoCommand): Promise<Produto> {
-    const { id, data } = command;
+    const { tenantId, id, data } = command;
 
-    const produto = await this.produtoModel.findByPk(id);
+    const produto = await this.produtoModel.findOne({ where: { id, tenantId } });
 
     if (!produto) {
       throw new NotFoundException(await this.i18n.translate('produto.notFound'));

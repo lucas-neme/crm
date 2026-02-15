@@ -23,6 +23,14 @@ export class Reserva extends Model {
     })
     unidadeId: string;
 
+    @Default('default')
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        field: 'tenant_id',
+    })
+    tenantId: string;
+
     @BelongsTo(() => Unidade)
     unidade: Unidade;
 

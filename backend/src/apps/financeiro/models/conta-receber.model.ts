@@ -21,6 +21,14 @@ export class ContaReceber extends Model {
     })
     descricao: string;
 
+    @Default('default')
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        field: 'tenant_id',
+    })
+    tenantId: string;
+
     @Column({
         type: DataType.DECIMAL(10, 2),
         allowNull: false,

@@ -13,39 +13,37 @@ export class ReservaService {
         private readonly unidadeModel: typeof Unidade,
     ) { }
 
-    async create(data: Partial<Reserva>): Promise<Reserva> {
-        await this.verifyExpiredReservations();
-        const unidade = await this.unidadeModel.findByPk(data.unidadeId);
-        if (!unidade) throw new BadRequestException('Unidade não encontrada');
+    async create(tenantId: string, data: Partial<Reserva>): Promise<Reserva> {
+        await this.verifyExpiredReservations(tenantId);
+        const unidade = await this.unidadeModel.findOne({ where: { id: data.unidadeId, tenantId } });
+        if (!unidade) throw new BadRequestException('Unidade nao encontrada');
 
         if (unidade.statusUnidade !== 'DISPONIVEL') {
-            throw new BadRequestException('Unidade não está disponível para reserva');
+            throw new BadRequestException('Unidade nao esta disponivel para reserva');
         }
 
-        // Check for active reservations just in case (race condition check skipped for MVP)
         const activeReserva = await this.reservaModel.findOne({
             where: {
                 unidadeId: data.unidadeId,
+                tenantId,
                 status: 'ATIVA',
             }
         });
 
         if (activeReserva) {
-            throw new BadRequestException('Já existe uma reserva ativa para esta unidade');
+            throw new BadRequestException('Ja existe uma reserva ativa para esta unidade');
         }
 
-        const reserva = await this.reservaModel.create(data);
-
-        // Update statusUnidade
+        const reserva = await this.reservaModel.create({ ...data, tenantId });
         await unidade.update({ statusUnidade: 'RESERVADO' });
 
         return reserva;
     }
 
-    async findAll(query: any = {}): Promise<Reserva[]> {
-        await this.verifyExpiredReservations();
+    async findAll(tenantId: string, query: any = {}): Promise<Reserva[]> {
+        await this.verifyExpiredReservations(tenantId);
 
-        const where: any = {};
+        const where: any = { tenantId };
         if (query.unidadeId) where.unidadeId = query.unidadeId;
         if (query.clienteId) where.clienteId = query.clienteId;
         if (query.status) where.status = query.status;
@@ -53,44 +51,46 @@ export class ReservaService {
         return this.reservaModel.findAll({
             where,
             include: [
-                { model: Unidade, attributes: ['id', 'codigoInterno', 'tipo'] },
-                { model: Cliente, attributes: ['id', 'nome', 'email', 'telefone'] }
+                { model: Unidade, attributes: ['id', 'codigoInterno', 'tipo'], where: { tenantId }, required: false },
+                { model: Cliente, attributes: ['id', 'nome', 'email', 'telefone'], where: { tenantId }, required: false }
             ],
             order: [['createdAt', 'DESC']]
         });
     }
 
-    async findOne(id: string): Promise<Reserva> {
-        return this.reservaModel.findByPk(id, {
-            include: [Unidade, Cliente]
+    async findOne(tenantId: string, id: string): Promise<Reserva> {
+        return this.reservaModel.findOne({
+            where: { id, tenantId },
+            include: [
+                { model: Unidade, where: { tenantId }, required: false },
+                { model: Cliente, where: { tenantId }, required: false },
+            ]
         });
     }
 
-    async update(id: string, data: Partial<Reserva>): Promise<Reserva> {
-        const reserva = await this.reservaModel.findByPk(id);
-        if (!reserva) throw new BadRequestException('Reserva não encontrada');
+    async update(tenantId: string, id: string, data: Partial<Reserva>): Promise<Reserva> {
+        const reserva = await this.reservaModel.findOne({ where: { id, tenantId } });
+        if (!reserva) throw new BadRequestException('Reserva nao encontrada');
 
         return reserva.update(data);
     }
 
-    async cancel(id: string): Promise<void> {
-        const reserva = await this.reservaModel.findByPk(id);
-        if (!reserva) throw new BadRequestException('Reserva não encontrada');
+    async cancel(tenantId: string, id: string): Promise<void> {
+        const reserva = await this.reservaModel.findOne({ where: { id, tenantId } });
+        if (!reserva) throw new BadRequestException('Reserva nao encontrada');
 
         if (reserva.status === 'ATIVA') {
             await reserva.update({ status: 'CANCELADA' });
 
-            // Free the unit
-            // Verify if there are no OTHER active reservations (unlikely but safe)
-            const unidade = await this.unidadeModel.findByPk(reserva.unidadeId);
+            const unidade = await this.unidadeModel.findOne({ where: { id: reserva.unidadeId, tenantId } });
             if (unidade) {
                 await unidade.update({ statusUnidade: 'DISPONIVEL' });
             }
         }
     }
 
-    async verifyExpiredReservations(): Promise<number> {
-        const activeReservas = await this.reservaModel.findAll({ where: { status: 'ATIVA' } });
+    async verifyExpiredReservations(tenantId: string): Promise<number> {
+        const activeReservas = await this.reservaModel.findAll({ where: { tenantId, status: 'ATIVA' } });
         const now = new Date();
         let processed = 0;
 
@@ -104,8 +104,7 @@ export class ReservaService {
             await res.update({ status: 'EXPIRADA' });
             processed += 1;
 
-            // Check if unity should be freed
-            const unit = await this.unidadeModel.findByPk(res.unidadeId);
+            const unit = await this.unidadeModel.findOne({ where: { id: res.unidadeId, tenantId } });
             if (unit && unit.statusUnidade === 'RESERVADO') {
                 await unit.update({ statusUnidade: 'DISPONIVEL' });
             }

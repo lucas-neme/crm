@@ -26,29 +26,62 @@
       <v-list nav density="comfortable">
         <v-list-item to="/" title="Home" prepend-icon="mdi-home" class="nav-item" />
         <v-list-item to="/clientes" title="Clientes" prepend-icon="mdi-account-group" class="nav-item" />
-        <v-list-item to="/leads" title="Leads" prepend-icon="mdi-filter-variant" class="nav-item" />
+        <v-list-item
+          v-if="modulesStore.enabledModules.leads"
+          to="/leads"
+          title="Leads"
+          prepend-icon="mdi-filter-variant"
+          class="nav-item"
+        />
 
-        <template v-if="modulesStore.produtoModulo === 'IMOBILIARIA'">
+        <template v-if="modulesStore.produtoModulo === 'IMOBILIARIA' && modulesStore.enabledModules.imoveis">
           <v-list-item to="/imoveis" title="Empreendimentos" prepend-icon="mdi-domain" class="nav-item" />
-          <v-list-item to="/vendas/reservas" title="Reservas" prepend-icon="mdi-calendar-clock" class="nav-item" />
+          <v-list-item
+            v-if="modulesStore.enabledModules.reservas"
+            to="/vendas/reservas"
+            title="Reservas"
+            prepend-icon="mdi-calendar-clock"
+            class="nav-item"
+          />
         </template>
 
         <v-list-item
-          v-if="modulesStore.produtoModulo === 'PADRAO'"
+          v-if="modulesStore.produtoModulo === 'PADRAO' && modulesStore.enabledModules.produtos"
           to="/produtos"
           title="Produtos"
           prepend-icon="mdi-package-variant"
           class="nav-item"
         />
 
-        <v-list-item to="/negocios" title="Negócios" prepend-icon="mdi-handshake" class="nav-item" />
+        <v-list-item
+          v-if="modulesStore.enabledModules.negocios"
+          to="/negocios"
+          title="Negócios"
+          prepend-icon="mdi-handshake"
+          class="nav-item"
+        />
 
-        <v-list-group value="Financeiro">
+        <v-list-group
+          v-if="modulesStore.enabledModules.contasPagar || modulesStore.enabledModules.contasReceber"
+          value="Financeiro"
+        >
           <template #activator="{ props }">
             <v-list-item v-bind="props" title="Financeiro" prepend-icon="mdi-bank" class="nav-item" />
           </template>
-          <v-list-item to="/financeiro/pagar" title="Contas a Pagar" prepend-icon="mdi-cash-minus" class="nav-item" />
-          <v-list-item to="/financeiro/receber" title="Contas a Receber" prepend-icon="mdi-cash-plus" class="nav-item" />
+          <v-list-item
+            v-if="modulesStore.enabledModules.contasPagar"
+            to="/financeiro/pagar"
+            title="Contas a Pagar"
+            prepend-icon="mdi-cash-minus"
+            class="nav-item"
+          />
+          <v-list-item
+            v-if="modulesStore.enabledModules.contasReceber"
+            to="/financeiro/receber"
+            title="Contas a Receber"
+            prepend-icon="mdi-cash-plus"
+            class="nav-item"
+          />
         </v-list-group>
 
         <v-list-item to="/configurar" title="Configurações" prepend-icon="mdi-cog" class="nav-item" />

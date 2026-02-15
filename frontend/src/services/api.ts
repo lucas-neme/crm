@@ -17,6 +17,10 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
       headers.Authorization = `Bearer ${authStore.token}`
     }
 
+    if (authStore.user?.tenantId) {
+      headers['x-tenant-id'] = authStore.user.tenantId
+    }
+
     response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,

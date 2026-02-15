@@ -9,26 +9,26 @@ export class ImovelService {
         private readonly imovelModel: typeof Imovel,
     ) { }
 
-    async findAll() {
-        return this.imovelModel.findAll({ order: [['createdAt', 'DESC']] });
+    async findAll(tenantId: string) {
+        return this.imovelModel.findAll({ where: { tenantId }, order: [['createdAt', 'DESC']] });
     }
 
-    async create(data: Partial<Imovel>) {
-        return this.imovelModel.create(data);
+    async create(tenantId: string, data: Partial<Imovel>) {
+        return this.imovelModel.create({ ...data, tenantId });
     }
 
-    async findOne(id: string) {
-        return this.imovelModel.findByPk(id);
+    async findOne(tenantId: string, id: string) {
+        return this.imovelModel.findOne({ where: { id, tenantId } });
     }
 
-    async update(id: string, data: Partial<Imovel>) {
-        const imovel = await this.imovelModel.findByPk(id);
+    async update(tenantId: string, id: string, data: Partial<Imovel>) {
+        const imovel = await this.imovelModel.findOne({ where: { id, tenantId } });
         if (!imovel) return null;
         return imovel.update(data);
     }
 
-    async remove(id: string) {
-        const imovel = await this.imovelModel.findByPk(id);
+    async remove(tenantId: string, id: string) {
+        const imovel = await this.imovelModel.findOne({ where: { id, tenantId } });
         if (imovel) {
             await imovel.destroy();
         }

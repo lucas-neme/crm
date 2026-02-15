@@ -1,40 +1,49 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ReservaService } from '../services/reserva.service';
-import { Reserva } from '../models/reserva.model';
 
+@ApiTags('reservas')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('reservas')
 export class ReservaController {
     constructor(private readonly service: ReservaService) { }
 
     @Post()
-    async create(@Body() body: any) {
-        // If unit is available etc logic in service
-        return this.service.create(body);
+    @ApiOperation({ summary: 'Criar uma nova reserva' })
+    async create(@Request() req: any, @Body() body: any) {
+        return this.service.create(req.user?.tenantId || 'default', body);
     }
 
     @Get()
-    async findAll(@Query() query: any) {
-        return this.service.findAll(query);
+    @ApiOperation({ summary: 'Listar todas as reservas' })
+    async findAll(@Request() req: any, @Query() query: any) {
+        return this.service.findAll(req.user?.tenantId || 'default', query);
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string) {
-        return this.service.findOne(id);
+    @ApiOperation({ summary: 'Buscar reserva por ID' })
+    async findOne(@Request() req: any, @Param('id') id: string) {
+        return this.service.findOne(req.user?.tenantId || 'default', id);
     }
 
     @Put(':id')
-    async update(@Param('id') id: string, @Body() body: any) {
-        return this.service.update(id, body);
+    @ApiOperation({ summary: 'Atualizar reserva' })
+    async update(@Request() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.update(req.user?.tenantId || 'default', id, body);
     }
 
     @Post(':id/cancel')
-    async cancel(@Param('id') id: string) {
-        return this.service.cancel(id);
+    @ApiOperation({ summary: 'Cancelar reserva' })
+    async cancel(@Request() req: any, @Param('id') id: string) {
+        return this.service.cancel(req.user?.tenantId || 'default', id);
     }
 
     @Post('verify-expired')
-    async verifyExpired() {
-        const count = await this.service.verifyExpiredReservations();
+    @ApiOperation({ summary: 'Verificar e processar reservas expiradas' })
+    async verifyExpired(@Request() req: any) {
+        const count = await this.service.verifyExpiredReservations(req.user?.tenantId || 'default');
         return { success: true, expiredProcessed: count };
     }
 }

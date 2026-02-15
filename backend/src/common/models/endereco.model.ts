@@ -61,6 +61,14 @@ export class Endereco extends Model {
   })
   cep: string;
 
+  @Default('default')
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'tenant_id',
+  })
+  tenantId: string;
+
   @Column({
     type: DataType.BOOLEAN,
     defaultValue: false,

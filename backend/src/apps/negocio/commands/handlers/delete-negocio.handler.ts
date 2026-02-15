@@ -17,9 +17,9 @@ export class DeleteNegocioHandler implements ICommandHandler<DeleteNegocioComman
   ) {}
 
   async execute(command: DeleteNegocioCommand): Promise<boolean> {
-    const { id } = command;
+    const { tenantId, id } = command;
 
-    const negocio = await this.negocioModel.findByPk(id);
+    const negocio = await this.negocioModel.findOne({ where: { id, tenantId } });
 
     if (!negocio) {
       throw new NotFoundException(await this.i18n.translate('negocio.notFound'));
@@ -27,7 +27,7 @@ export class DeleteNegocioHandler implements ICommandHandler<DeleteNegocioComman
 
     // Remover associações com produtos
     await this.negocioProdutoModel.destroy({
-      where: { negocioId: id },
+      where: { negocioId: id, tenantId },
     });
 
     await negocio.destroy();

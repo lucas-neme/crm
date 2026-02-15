@@ -14,9 +14,9 @@ export class DeleteProdutoHandler implements ICommandHandler<DeleteProdutoComman
   ) {}
 
   async execute(command: DeleteProdutoCommand): Promise<boolean> {
-    const { id } = command;
+    const { tenantId, id } = command;
 
-    const produto = await this.produtoModel.findByPk(id);
+    const produto = await this.produtoModel.findOne({ where: { id, tenantId } });
 
     if (!produto) {
       throw new NotFoundException(await this.i18n.translate('produto.notFound'));

@@ -3,9 +3,10 @@ import { UpdateNegocioDto } from '../../dto/update-negocio.dto';
 
 export class UpdateNegocioCommand extends BaseCommand {
   constructor(
+    public readonly tenantId: string,
     public readonly id: string,
     public readonly data: UpdateNegocioDto,
   ) {
-    super({ id, data });
+    super({ tenantId, id, data });
   }
 }

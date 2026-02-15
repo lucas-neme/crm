@@ -11,6 +11,8 @@ export class GetAllProdutosHandler implements IQueryHandler<GetAllProdutosQuery>
   ) {}
 
   async execute(query: GetAllProdutosQuery): Promise<Produto[]> {
-    return await this.produtoModel.findAll();
+    return await this.produtoModel.findAll({
+      where: { tenantId: query.tenantId },
+    });
   }
 }

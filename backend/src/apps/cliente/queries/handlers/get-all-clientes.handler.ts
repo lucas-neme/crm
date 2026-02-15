@@ -11,7 +11,9 @@ export class GetAllClientesHandler implements IQueryHandler<GetAllClientesQuery>
   ) { }
 
   async execute(query: GetAllClientesQuery): Promise<Cliente[]> {
+    const { tenantId } = query;
     return await this.clienteModel.findAll({
+      where: { tenantId },
       attributes: [
         'id',
         'codigo',

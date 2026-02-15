@@ -11,17 +11,15 @@ export class PropostaService {
         private readonly propostaModel: typeof Proposta,
     ) { }
 
-    async create(data: Partial<Proposta>): Promise<Proposta> {
-        // Basic validation
-        // Status initialization?
+    async create(tenantId: string, data: Partial<Proposta>): Promise<Proposta> {
         if (!data.clienteId || !data.unidadeId || !data.valorProposto) {
             throw new BadRequestException('Dados incompletos');
         }
-        return this.propostaModel.create(data);
+        return this.propostaModel.create({ ...data, tenantId });
     }
 
-    async findAll(query: any = {}): Promise<Proposta[]> {
-        const where: any = {};
+    async findAll(tenantId: string, query: any = {}): Promise<Proposta[]> {
+        const where: any = { tenantId };
         if (query.unidadeId) where.unidadeId = query.unidadeId;
         if (query.clienteId) where.clienteId = query.clienteId;
         if (query.status) where.status = query.status;
@@ -29,22 +27,26 @@ export class PropostaService {
         return this.propostaModel.findAll({
             where,
             include: [
-                { model: Unidade, attributes: ['id', 'codigoInterno', 'valorOferta'] },
-                { model: Cliente, attributes: ['id', 'nome'] }
+                { model: Unidade, attributes: ['id', 'codigoInterno', 'valorOferta'], where: { tenantId }, required: false },
+                { model: Cliente, attributes: ['id', 'nome'], where: { tenantId }, required: false }
             ],
             order: [['createdAt', 'DESC']]
         });
     }
 
-    async findOne(id: string): Promise<Proposta> {
-        return this.propostaModel.findByPk(id, {
-            include: [Unidade, Cliente]
+    async findOne(tenantId: string, id: string): Promise<Proposta> {
+        return this.propostaModel.findOne({
+            where: { id, tenantId },
+            include: [
+                { model: Unidade, where: { tenantId }, required: false },
+                { model: Cliente, where: { tenantId }, required: false },
+            ]
         });
     }
 
-    async update(id: string, data: Partial<Proposta>): Promise<Proposta> {
-        const proposta = await this.propostaModel.findByPk(id);
-        if (!proposta) throw new BadRequestException('Proposta não encontrada');
+    async update(tenantId: string, id: string, data: Partial<Proposta>): Promise<Proposta> {
+        const proposta = await this.propostaModel.findOne({ where: { id, tenantId } });
+        if (!proposta) throw new BadRequestException('Proposta nao encontrada');
         return proposta.update(data);
     }
 }

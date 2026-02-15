@@ -6,6 +6,8 @@ interface User {
     id?: string;
     email: string;
     name?: string;
+    tenantId?: string;
+    isSystemAdmin?: boolean;
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -14,6 +16,14 @@ export const useAuthStore = defineStore('auth', () => {
     // const router = useRouter()
 
     const isAuthenticated = computed(() => !!token.value)
+
+    function resolveTenantHint(): string | null {
+        if (typeof window === 'undefined') return null
+        const host = window.location.hostname
+        if (!host || host === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return null
+        const first = host.split('.')[0]
+        return first && first !== 'www' ? first : null
+    }
 
     function setToken(newToken: string) {
         token.value = newToken
@@ -30,6 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    ...(resolveTenantHint() ? { 'x-tenant-id': resolveTenantHint() as string } : {}),
                 },
                 body: JSON.stringify({ email, password }),
             })
@@ -57,6 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(resolveTenantHint() ? { 'x-tenant-id': resolveTenantHint() as string } : {}),
             },
             body: JSON.stringify({ name, email, password }),
         })
@@ -74,6 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(resolveTenantHint() ? { 'x-tenant-id': resolveTenantHint() as string } : {}),
             },
             body: JSON.stringify({ email }),
         })
@@ -91,6 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(resolveTenantHint() ? { 'x-tenant-id': resolveTenantHint() as string } : {}),
             },
             body: JSON.stringify({ token: tokenValue, password }),
         })

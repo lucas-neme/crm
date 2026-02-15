@@ -22,19 +22,23 @@ export class GetAllNegociosHandler implements IQueryHandler<GetAllNegociosQuery>
   ) { }
 
   async execute(query: GetAllNegociosQuery): Promise<any[]> {
+    const { tenantId } = query;
     const negocios = await this.negocioModel.findAll({
+      where: { tenantId },
       attributes: ['id', 'codigo', 'clienteId', 'entrega', 'enderecoEntregaId', 'dataEntrega', 'dataVenda', 'valorFinal', 'descontoGeral'],
       include: [
         {
           model: Cliente,
           attributes: ['id', 'nome'],
+          where: { tenantId },
+          required: false,
         },
       ],
     });
     const negocioIds = negocios.map((n: any) => n.id);
     const itens = negocioIds.length > 0
       ? await this.negocioProdutoModel.findAll({
-        where: { negocioId: { [Op.in]: negocioIds } },
+        where: { negocioId: { [Op.in]: negocioIds }, tenantId },
         attributes: ['negocioId', 'produtoId', 'quantidade', 'valorUnitario', 'desconto'],
       })
       : [];
@@ -44,13 +48,13 @@ export class GetAllNegociosHandler implements IQueryHandler<GetAllNegociosQuery>
     const [produtos, unidades] = await Promise.all([
       produtoIds.length > 0
         ? this.produtoModel.findAll({
-          where: { id: { [Op.in]: produtoIds } },
+          where: { id: { [Op.in]: produtoIds }, tenantId },
           attributes: ['id', 'nome', 'valorUnitario'],
         })
         : Promise.resolve([]),
       produtoIds.length > 0
         ? this.unidadeModel.findAll({
-          where: { id: { [Op.in]: produtoIds } },
+          where: { id: { [Op.in]: produtoIds }, tenantId },
           attributes: ['id', 'codigoInterno', 'tipo', 'valorOferta', 'valorTabela'],
         })
         : Promise.resolve([]),

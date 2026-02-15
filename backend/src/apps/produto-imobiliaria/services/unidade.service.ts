@@ -13,18 +13,18 @@ export class UnidadeService {
         private readonly empreendimentoModel: typeof Empreendimento,
     ) { }
 
-    async create(data: Partial<Unidade>): Promise<Unidade> {
-        const empreendimento = await this.empreendimentoModel.findByPk(data.empreendimentoId);
-        if (!empreendimento) throw new BadRequestException('Empreendimento não encontrado');
+    async create(tenantId: string, data: Partial<Unidade>): Promise<Unidade> {
+        const empreendimento = await this.empreendimentoModel.findOne({ where: { id: data.empreendimentoId, tenantId } });
+        if (!empreendimento) throw new BadRequestException('Empreendimento nao encontrado');
 
-        const exists = await this.unidadeModel.findOne({ where: { codigoInterno: data.codigoInterno } });
-        if (exists) throw new BadRequestException('Código interno já existe');
+        const exists = await this.unidadeModel.findOne({ where: { codigoInterno: data.codigoInterno, tenantId } });
+        if (exists) throw new BadRequestException('Codigo interno ja existe');
 
-        return this.unidadeModel.create(data);
+        return this.unidadeModel.create({ ...data, tenantId });
     }
 
-    async findAll(query: any = {}): Promise<Unidade[]> {
-        const where: any = {};
+    async findAll(tenantId: string, query: any = {}): Promise<Unidade[]> {
+        const where: any = { tenantId };
         if (query.empreendimentoId) where.empreendimentoId = query.empreendimentoId;
         if (query.statusUnidade) where.statusUnidade = query.statusUnidade;
         if (query.tipo) where.tipo = query.tipo;
@@ -35,42 +35,36 @@ export class UnidadeService {
         return this.unidadeModel.findAll({
             where,
             order: [['codigoInterno', 'ASC']],
-            include: [{ model: Empreendimento, attributes: ['id', 'nome'] }]
+            include: [{ model: Empreendimento, attributes: ['id', 'nome'], where: { tenantId }, required: false }]
         });
     }
 
-    async findOne(id: string): Promise<Unidade> {
-        return this.unidadeModel.findByPk(id, { include: [Empreendimento] });
+    async findOne(tenantId: string, id: string): Promise<Unidade> {
+        return this.unidadeModel.findOne({ where: { id, tenantId }, include: [{ model: Empreendimento, where: { tenantId }, required: false }] });
     }
 
-    async update(id: string, data: Partial<Unidade>): Promise<Unidade> {
-        const unidade = await this.unidadeModel.findByPk(id);
-        if (!unidade) throw new Error('Unidade não encontrada');
-
-        // Check Status Transition Logic here if needed
-        // e.g. Can't move from Vendido to Disponivel without extra checks? 
-        // For now simplistic.
+    async update(tenantId: string, id: string, data: Partial<Unidade>): Promise<Unidade> {
+        const unidade = await this.unidadeModel.findOne({ where: { id, tenantId } });
+        if (!unidade) throw new Error('Unidade nao encontrada');
 
         await unidade.update(data);
-        return this.findOne(id);
+        return this.findOne(tenantId, id);
     }
 
-    async updateStatus(id: string, status: string): Promise<Unidade> {
-        const unidade = await this.unidadeModel.findByPk(id);
-        if (!unidade) throw new Error('Unidade não encontrada');
+    async updateStatus(tenantId: string, id: string, status: string): Promise<Unidade> {
+        const unidade = await this.unidadeModel.findOne({ where: { id, tenantId } });
+        if (!unidade) throw new Error('Unidade nao encontrada');
 
-        // Basic validation
         if (['RESERVADO', 'VENDIDO'].includes(unidade.statusUnidade) && status === 'DISPONIVEL') {
-            // Check if there are active reservations?
-            // Implementing simplistic logic for now
+            // reserved for future state validation rules
         }
 
         await unidade.update({ statusUnidade: status });
         return unidade;
     }
 
-    async remove(id: string): Promise<void> {
-        const unidade = await this.unidadeModel.findByPk(id);
+    async remove(tenantId: string, id: string): Promise<void> {
+        const unidade = await this.unidadeModel.findOne({ where: { id, tenantId } });
         if (unidade) await unidade.destroy();
     }
 }

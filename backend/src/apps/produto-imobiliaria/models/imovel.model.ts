@@ -21,6 +21,14 @@ export class Imovel extends Model {
     })
     codigo: number;
 
+    @Default('default')
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+        field: 'tenant_id',
+    })
+    tenantId: string;
+
     @Column({
         type: DataType.STRING,
         allowNull: false,

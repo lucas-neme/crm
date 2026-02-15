@@ -14,9 +14,9 @@ export class GetProdutoByIdHandler implements IQueryHandler<GetProdutoByIdQuery>
   ) {}
 
   async execute(query: GetProdutoByIdQuery): Promise<Produto> {
-    const { id } = query;
+    const { tenantId, id } = query;
 
-    const produto = await this.produtoModel.findByPk(id);
+    const produto = await this.produtoModel.findOne({ where: { id, tenantId } });
 
     if (!produto) {
       throw new NotFoundException(await this.i18n.translate('produto.notFound'));

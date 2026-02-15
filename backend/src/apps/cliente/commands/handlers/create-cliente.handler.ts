@@ -14,11 +14,11 @@ export class CreateClienteHandler implements ICommandHandler<CreateClienteComman
   ) { }
 
   async execute(command: CreateClienteCommand): Promise<Cliente> {
-    const { data } = command;
+    const { tenantId, data } = command;
 
     // Check if cliente already exists
     const existingCliente = await this.clienteModel.findOne({
-      where: { email: data.email },
+      where: { email: data.email, tenantId },
     });
 
     if (existingCliente) {
@@ -29,7 +29,7 @@ export class CreateClienteHandler implements ICommandHandler<CreateClienteComman
 
     // Check if telefone already exists
     const existingTelefone = await this.clienteModel.findOne({
-      where: { telefone: data.telefone },
+      where: { telefone: data.telefone, tenantId },
     });
 
     if (existingTelefone) {
@@ -37,6 +37,7 @@ export class CreateClienteHandler implements ICommandHandler<CreateClienteComman
     }
 
     const ultimoCliente = await this.clienteModel.findOne({
+      where: { tenantId },
       order: [['codigo', 'DESC']],
       raw: true,
     });
@@ -45,6 +46,7 @@ export class CreateClienteHandler implements ICommandHandler<CreateClienteComman
     // Create cliente
     const cliente = await this.clienteModel.create({
       codigo: novoCodigo,
+      tenantId,
       nome: data.nome,
       email: data.email,
       telefone: data.telefone,

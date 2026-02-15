@@ -24,7 +24,7 @@ export class CreateNegocioHandler implements ICommandHandler<CreateNegocioComman
   ) { }
 
   async execute(command: CreateNegocioCommand): Promise<Negocio> {
-    const { data } = command;
+    const { tenantId, data } = command;
 
     try {
       const subtotal = data.produtos.reduce(
@@ -41,6 +41,7 @@ export class CreateNegocioHandler implements ICommandHandler<CreateNegocioComman
 
       // Gerar código sequencial
       const ultimoNegocio = await this.negocioModel.findOne({
+        where: { tenantId },
         order: [['codigo', 'DESC']],
         raw: true,
       });
@@ -48,6 +49,7 @@ export class CreateNegocioHandler implements ICommandHandler<CreateNegocioComman
 
       const negocio = await this.negocioModel.create({
         codigo: novoCodigo,
+        tenantId,
         clienteId: data.clienteId,
         entrega: data.entrega,
         enderecoEntregaId: data.enderecoEntregaId,
@@ -58,12 +60,13 @@ export class CreateNegocioHandler implements ICommandHandler<CreateNegocioComman
       });
 
       for (const produto of data.produtos) {
-        let produtoRef = await this.produtoModel.findByPk(produto.produtoId);
+        let produtoRef = await this.produtoModel.findOne({ where: { id: produto.produtoId, tenantId } });
 
         if (!produtoRef) {
-          const unidade = await this.unidadeModel.findByPk(produto.produtoId);
+          const unidade = await this.unidadeModel.findOne({ where: { id: produto.produtoId, tenantId } });
           if (unidade) {
             const ultimoProduto = await this.produtoModel.findOne({
+              where: { tenantId },
               order: [['codigo', 'DESC']],
               raw: true,
             });
@@ -71,6 +74,7 @@ export class CreateNegocioHandler implements ICommandHandler<CreateNegocioComman
             produtoRef = await this.produtoModel.create({
               id: unidade.id,
               codigo: novoCodigoProduto,
+              tenantId,
               nome: `Unidade ${unidade.codigoInterno || unidade.id}`,
               quantidade: 1,
               valorUnitario: produto.valorUnitario || (unidade as any).valorOferta || (unidade as any).valorTabela || 0,
@@ -80,6 +84,7 @@ export class CreateNegocioHandler implements ICommandHandler<CreateNegocioComman
         }
 
         await this.negocioProdutoModel.create({
+          tenantId,
           negocioId: negocio.id,
           produtoId: produtoRef ? produtoRef.id : produto.produtoId,
           quantidade: produto.quantidade,
@@ -89,7 +94,8 @@ export class CreateNegocioHandler implements ICommandHandler<CreateNegocioComman
       }
 
       // Criar Conta a Receber automaticamente
-      await this.financeiroService.createReceber({
+      await this.financeiroService.createReceber(tenantId, {
+        tenantId,
         clienteId: negocio.clienteId,
         valor: negocio.valorFinal,
         descricao: `Negócio #${negocio.codigo}`,

@@ -17,9 +17,16 @@ export class User extends Model {
   @Column({
     type: DataType.STRING,
     allowNull: false,
-    unique: true,
   })
   email: string;
+
+  @Default('default')
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'tenant_id',
+  })
+  tenantId: string;
 
   @Column({
     type: DataType.STRING,

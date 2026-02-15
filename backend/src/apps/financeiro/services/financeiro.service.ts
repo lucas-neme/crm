@@ -21,21 +21,22 @@ export class FinanceiroService {
     ) { }
 
     // --- Contas a Pagar ---
-    async createPagar(dto: CreateContaDto): Promise<ContaPagar> {
+    async createPagar(tenantId: string, dto: CreateContaDto): Promise<ContaPagar> {
         const conta = await this.contaPagarModel.create({
             ...dto,
+            tenantId,
             status: StatusConta.PENDENTE,
         });
         this.triggerPowerBiSync(conta, 'PAGAR', 'CREATE');
         return conta;
     }
 
-    async findAllPagar() {
-        return this.contaPagarModel.findAll();
+    async findAllPagar(tenantId: string) {
+        return this.contaPagarModel.findAll({ where: { tenantId } });
     }
 
-    async updatePagar(id: string, updates: Partial<ContaPagar>) {
-        const conta = await this.contaPagarModel.findByPk(id);
+    async updatePagar(tenantId: string, id: string, updates: Partial<ContaPagar>) {
+        const conta = await this.contaPagarModel.findOne({ where: { id, tenantId } });
         if (!conta) return null;
         const updated = await conta.update(updates);
         this.triggerPowerBiSync(updated, 'PAGAR', 'UPDATE');
@@ -43,14 +44,15 @@ export class FinanceiroService {
     }
 
     // --- Contas a Receber ---
-    async createReceber(dto: CreateContaDto): Promise<ContaReceber> {
+    async createReceber(tenantId: string, dto: CreateContaDto): Promise<ContaReceber> {
         const conta = await this.contaReceberModel.create({
             ...dto,
+            tenantId,
             status: StatusConta.PENDENTE,
         });
 
         // Trigger n8n webhook for billing notification (Reload to get client data)
-        const contaComCliente = await this.findOneReceber(conta.id);
+        const contaComCliente = await this.findOneReceber(tenantId, conta.id);
         if (contaComCliente) {
             this.triggerBillingNotification(contaComCliente);
         }
@@ -60,16 +62,16 @@ export class FinanceiroService {
         return conta;
     }
 
-    async findAllReceber() {
-        return this.contaReceberModel.findAll({ include: ['cliente'] });
+    async findAllReceber(tenantId: string) {
+        return this.contaReceberModel.findAll({ where: { tenantId }, include: ['cliente'] });
     }
 
-    async findOneReceber(id: string) {
-        return this.contaReceberModel.findByPk(id, { include: ['cliente'] });
+    async findOneReceber(tenantId: string, id: string) {
+        return this.contaReceberModel.findOne({ where: { id, tenantId }, include: ['cliente'] });
     }
 
-    async updateReceber(id: string, updates: Partial<ContaReceber>) {
-        const conta = await this.contaReceberModel.findByPk(id);
+    async updateReceber(tenantId: string, id: string, updates: Partial<ContaReceber>) {
+        const conta = await this.contaReceberModel.findOne({ where: { id, tenantId } });
         if (!conta) return null;
         const updated = await conta.update(updates);
         this.triggerPowerBiSync(updated, 'RECEBER', 'UPDATE');

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, UseGuards, Patch, Request } from '@nestjs/common';
 import { FinanceiroService } from '../services/financeiro.service';
 import { CreateContaDto } from '../dto/create-conta.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -13,46 +13,53 @@ export class FinanceiroController {
 
     // --- Contas a Pagar ---
     @Post('pagar')
-    @ApiOperation({ summary: 'Create Conta a Pagar' })
-    createPagar(@Body() dto: CreateContaDto) {
-        return this.financeiroService.createPagar(dto);
+    @ApiOperation({ summary: 'Criar Conta a Pagar' })
+    createPagar(@Request() req: any, @Body() dto: CreateContaDto) {
+        const tenantId = req.user?.tenantId || 'default';
+        return this.financeiroService.createPagar(tenantId, dto);
     }
 
     @Get('pagar')
-    @ApiOperation({ summary: 'List Contas a Pagar' })
-    findAllPagar() {
-        return this.financeiroService.findAllPagar();
+    @ApiOperation({ summary: 'Listar Contas a Pagar' })
+    findAllPagar(@Request() req: any) {
+        const tenantId = req.user?.tenantId || 'default';
+        return this.financeiroService.findAllPagar(tenantId);
     }
 
     @Patch('pagar/:id/pay')
-    @ApiOperation({ summary: 'Mark Conta a Pagar as PAID' })
-    markAsPaid(@Param('id') id: string) {
-        return this.financeiroService.updatePagar(id, { status: 'PAGO' as any, dtPagamento: new Date().toISOString().split('T')[0] });
+    @ApiOperation({ summary: 'Marcar Conta a Pagar como PAGA' })
+    markAsPaid(@Request() req: any, @Param('id') id: string) {
+        const tenantId = req.user?.tenantId || 'default';
+        return this.financeiroService.updatePagar(tenantId, id, { status: 'PAGO' as any, dtPagamento: new Date().toISOString().split('T')[0] });
     }
 
     // --- Contas a Receber ---
     @Post('receber')
-    @ApiOperation({ summary: 'Create Conta a Receber' })
-    createReceber(@Body() dto: CreateContaDto) {
-        return this.financeiroService.createReceber(dto);
+    @ApiOperation({ summary: 'Criar Conta a Receber' })
+    createReceber(@Request() req: any, @Body() dto: CreateContaDto) {
+        const tenantId = req.user?.tenantId || 'default';
+        return this.financeiroService.createReceber(tenantId, dto);
     }
 
     @Get('receber')
-    @ApiOperation({ summary: 'List Contas a Receber' })
-    findAllReceber() {
-        return this.financeiroService.findAllReceber();
+    @ApiOperation({ summary: 'Listar Contas a Receber' })
+    findAllReceber(@Request() req: any) {
+        const tenantId = req.user?.tenantId || 'default';
+        return this.financeiroService.findAllReceber(tenantId);
     }
 
     @Patch('receber/:id/receive')
-    @ApiOperation({ summary: 'Mark Conta a Receber as PAID (Received)' })
-    markAsReceived(@Param('id') id: string) {
-        return this.financeiroService.updateReceber(id, { status: 'PAGO' as any, dtRecebimento: new Date().toISOString().split('T')[0] });
+    @ApiOperation({ summary: 'Marcar Conta a Receber como PAGA (Recebido)' })
+    markAsReceived(@Request() req: any, @Param('id') id: string) {
+        const tenantId = req.user?.tenantId || 'default';
+        return this.financeiroService.updateReceber(tenantId, id, { status: 'PAGO' as any, dtRecebimento: new Date().toISOString().split('T')[0] });
     }
 
     @Post('receber/:id/notify')
-    @ApiOperation({ summary: 'Manually trigger billing notification (n8n)' })
-    async triggerNotification(@Param('id') id: string) {
-        const conta = await this.financeiroService.findOneReceber(id);
+    @ApiOperation({ summary: 'Acionar manualmente notificação de cobrança (n8n)' })
+    async triggerNotification(@Request() req: any, @Param('id') id: string) {
+        const tenantId = req.user?.tenantId || 'default';
+        const conta = await this.financeiroService.findOneReceber(tenantId, id);
         if (conta) {
             await this.financeiroService.triggerBillingNotification(conta);
             return { message: 'Notification triggered' };
@@ -61,8 +68,9 @@ export class FinanceiroController {
     }
 
     @Patch('receber/:id')
-    @ApiOperation({ summary: 'Update Conta a Receber' })
-    updateReceber(@Param('id') id: string, @Body() dto: Partial<CreateContaDto>) {
-        return this.financeiroService.updateReceber(id, dto as any);
+    @ApiOperation({ summary: 'Atualizar Conta a Receber' })
+    updateReceber(@Request() req: any, @Param('id') id: string, @Body() dto: Partial<CreateContaDto>) {
+        const tenantId = req.user?.tenantId || 'default';
+        return this.financeiroService.updateReceber(tenantId, id, dto as any);
     }
 }

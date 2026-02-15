@@ -8,10 +8,13 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { I18nService } from 'nestjs-i18n';
+import { AuthGuard } from '@nestjs/passport';
 import { CreateNegocioDto } from './dto/create-negocio.dto';
 import { UpdateNegocioDto } from './dto/update-negocio.dto';
 import { CreateNegocioCommand } from './commands/impl/create-negocio.command';
@@ -23,6 +26,8 @@ import { BaseResponse } from '@/common/interfaces/base-response.interface';
 import { Negocio } from './models/negocio.model';
 
 @ApiTags('negocios')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('negocios')
 export class NegociosController {
   constructor(
@@ -38,9 +43,10 @@ export class NegociosController {
     description: 'Negócio criado com sucesso',
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
-  async create(@Body() createNegocioDto: CreateNegocioDto): Promise<BaseResponse<Negocio>> {
+  async create(@Request() req: any, @Body() createNegocioDto: CreateNegocioDto): Promise<BaseResponse<Negocio>> {
+    const tenantId = req.user?.tenantId || 'default';
     const negocio = await this.commandBus.execute(
-      new CreateNegocioCommand(createNegocioDto),
+      new CreateNegocioCommand(tenantId, createNegocioDto),
     );
 
     return {
@@ -56,8 +62,9 @@ export class NegociosController {
     status: 200,
     description: 'Lista de negócios',
   })
-  async findAll(): Promise<BaseResponse<Negocio[]>> {
-    const negocios = await this.queryBus.execute(new GetAllNegociosQuery());
+  async findAll(@Request() req: any): Promise<BaseResponse<Negocio[]>> {
+    const tenantId = req.user?.tenantId || 'default';
+    const negocios = await this.queryBus.execute(new GetAllNegociosQuery(tenantId));
 
     return {
       success: true,
@@ -73,8 +80,9 @@ export class NegociosController {
     description: 'Negócio encontrado',
   })
   @ApiResponse({ status: 404, description: 'Negócio não encontrado' })
-  async findOne(@Param('id') id: string): Promise<BaseResponse<Negocio>> {
-    const negocio = await this.queryBus.execute(new GetNegocioByIdQuery(id));
+  async findOne(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<Negocio>> {
+    const tenantId = req.user?.tenantId || 'default';
+    const negocio = await this.queryBus.execute(new GetNegocioByIdQuery(tenantId, id));
 
     return {
       success: true,
@@ -91,11 +99,13 @@ export class NegociosController {
   })
   @ApiResponse({ status: 404, description: 'Negócio não encontrado' })
   async update(
+    @Request() req: any,
     @Param('id') id: string,
     @Body() updateNegocioDto: UpdateNegocioDto,
   ): Promise<BaseResponse<Negocio>> {
+    const tenantId = req.user?.tenantId || 'default';
     const negocio = await this.commandBus.execute(
-      new UpdateNegocioCommand(id, updateNegocioDto),
+      new UpdateNegocioCommand(tenantId, id, updateNegocioDto),
     );
 
     return {
@@ -114,8 +124,9 @@ export class NegociosController {
     description: 'Negócio excluído com sucesso',
   })
   @ApiResponse({ status: 404, description: 'Negócio não encontrado' })
-  async remove(@Param('id') id: string): Promise<BaseResponse<boolean>> {
-    await this.commandBus.execute(new DeleteNegocioCommand(id));
+  async remove(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<boolean>> {
+    const tenantId = req.user?.tenantId || 'default';
+    await this.commandBus.execute(new DeleteNegocioCommand(tenantId, id));
 
     return {
       success: true,

@@ -16,6 +16,7 @@ export interface ManagedUser {
   id: string
   name: string
   email: string
+  isSystemAdmin?: boolean
   phone?: string
   birthDate?: string
   isActive: boolean
@@ -33,6 +34,7 @@ const getAuthHeaders = () => {
   return {
     'Content-Type': 'application/json',
     Authorization: token ? `Bearer ${token}` : '',
+    ...(authStore.user?.tenantId ? { 'x-tenant-id': authStore.user.tenantId } : {}),
   }
 }
 

@@ -13,9 +13,10 @@ export class CreateProdutoHandler implements ICommandHandler<CreateProdutoComman
   ) {}
 
   async execute(command: CreateProdutoCommand): Promise<Produto> {
-    const { data } = command;
+    const { tenantId, data } = command;
 
     const ultimoProduto = await this.produtoModel.findOne({
+      where: { tenantId },
       order: [['codigo', 'DESC']],
       raw: true,
     });
@@ -23,6 +24,7 @@ export class CreateProdutoHandler implements ICommandHandler<CreateProdutoComman
 
     const produto = await this.produtoModel.create({
       codigo: novoCodigo,
+      tenantId,
       nome: data.nome,
       quantidade: data.quantidade,
       valorUnitario: data.valorUnitario,
