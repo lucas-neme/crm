@@ -637,6 +637,7 @@ import { notificationsStore } from '../stores/notificationsStore'
 import { maskCNPJ, maskPhone } from '../utils/formatters'
 import { getApiBaseUrl } from '../utils/apiBase'
 import { resolveTenantHint } from '../utils/tenantHint'
+import { resizeImage } from '../utils/imageUtils'
 
 const { branding, salvarBranding, carregarBrandingPublico, salvarBrandingRemoto } = useBrandingStore()
 const authStore = useAuthStore()
@@ -863,18 +864,26 @@ const salvarEdicaoLogo = () => {
   notificationsStore.notify('Logo atualizada com sucesso.', 'success')
 }
 
-const handleLogoUpload = (event: Event) => {
+const handleLogoUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
 
   if (file) {
     const reader = new FileReader()
-    reader.onload = (e) => {
-      previewUrl.value = e.target?.result as string
-      form.value.logoUrl = e.target?.result as string
-      form.value.logoOffsetX = 0
-      form.value.logoOffsetY = 0
-      editandoLogo.value = true
+    reader.onload = async (e) => {
+      const originalBase64 = e.target?.result as string
+      try {
+        // Redimensionar logo para no máximo 800x800 com boa qualidade
+        const compressed = await resizeImage(originalBase64, 800, 800, 0.9)
+        previewUrl.value = compressed
+        form.value.logoUrl = compressed
+        form.value.logoOffsetX = 0
+        form.value.logoOffsetY = 0
+        editandoLogo.value = true
+      } catch (err) {
+        console.error('Erro ao processar logo:', err)
+        notificationsStore.notify('Erro ao processar a imagem. Tente outra.', 'error')
+      }
     }
     reader.readAsDataURL(file)
   } else {
@@ -882,16 +891,24 @@ const handleLogoUpload = (event: Event) => {
   }
 }
 
-const handleOwnerPhotoUpload = (event: Event) => {
+const handleOwnerPhotoUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
 
   if (!file) return
 
   const reader = new FileReader()
-  reader.onload = (e) => {
-    ownerPreviewUrl.value = e.target?.result as string
-    form.value.ownerPhotoUrl = e.target?.result as string
+  reader.onload = async (e) => {
+    const originalBase64 = e.target?.result as string
+    try {
+      // Redimensionar foto de capa para no máximo 1200x800 com compressão
+      const compressed = await resizeImage(originalBase64, 1200, 1200, 0.7)
+      ownerPreviewUrl.value = compressed
+      form.value.ownerPhotoUrl = compressed
+    } catch (err) {
+      console.error('Erro ao processar foto:', err)
+      notificationsStore.notify('Erro ao processar a foto. Tente outra.', 'error')
+    }
   }
   reader.readAsDataURL(file)
 }

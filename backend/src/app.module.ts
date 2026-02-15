@@ -13,6 +13,7 @@ import { FinanceiroModule } from './apps/financeiro/financeiro.module';
 import { ConfiguracoesModule } from './apps/configuracoes/configuracoes.module';
 import { ImovelModule } from './apps/produto-imobiliaria/imovel.module';
 import { TenantContextMiddleware } from './common/tenant/tenant-context.middleware';
+import { buildSequelizeTenantHooks } from './common/tenant/tenant-db-session.hook';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { TenantContextMiddleware } from './common/tenant/tenant-context.middlewa
       autoLoadModels: true,
       synchronize: process.env.DB_SYNCHRONIZE === 'true',
       logging: console.log,
+      hooks: buildSequelizeTenantHooks(),
     }),
 
     // i18n

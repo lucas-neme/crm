@@ -87,13 +87,32 @@ module.exports = {
       `);
     }
 
-    const enableRls = String(process.env.ENABLE_RLS || 'false').toLowerCase() === 'true';
+    await queryInterface.sequelize.query(`
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;
+    `);
+    await queryInterface.sequelize.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS users_tenant_id_email_key
+      ON users (tenant_id, email);
+    `);
+
+    await queryInterface.sequelize.query(`
+      ALTER TABLE imoveis DROP CONSTRAINT IF EXISTS imoveis_codigo_key;
+    `);
+    await queryInterface.sequelize.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS imoveis_tenant_id_codigo_key
+      ON imoveis (tenant_id, codigo);
+    `);
+
+    const enableRls = String(process.env.ENABLE_RLS || 'true').toLowerCase() !== 'false';
     if (!enableRls) return;
 
     for (const table of TENANT_TABLES) {
       const policyName = `${table}_tenant_isolation`;
       await queryInterface.sequelize.query(`
         ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;
+      `);
+      await queryInterface.sequelize.query(`
+        ALTER TABLE ${table} FORCE ROW LEVEL SECURITY;
       `);
       await queryInterface.sequelize.query(`
         DO $$
@@ -106,8 +125,8 @@ module.exports = {
           ) THEN
             CREATE POLICY ${policyName}
             ON ${table}
-            USING (tenant_id = current_setting('app.tenant_id', true))
-            WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+            USING (tenant_id = current_setting('app.tenant_id', true)::text)
+            WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::text);
           END IF;
         END $$;
       `);
@@ -119,6 +138,9 @@ module.exports = {
       const policyName = `${table}_tenant_isolation`;
       await queryInterface.sequelize.query(`
         DROP POLICY IF EXISTS ${policyName} ON ${table};
+      `);
+      await queryInterface.sequelize.query(`
+        ALTER TABLE ${table} NO FORCE ROW LEVEL SECURITY;
       `);
       await queryInterface.sequelize.query(`
         ALTER TABLE ${table} DISABLE ROW LEVEL SECURITY;
