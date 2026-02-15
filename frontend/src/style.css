@@ -11,7 +11,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', 'Manrope', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Manrope', sans-serif;
   background: linear-gradient(180deg, var(--erp-bg-start) 0%, var(--erp-bg-end) 100%);
   color: var(--erp-text);
 }

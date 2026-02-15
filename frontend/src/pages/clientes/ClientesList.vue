@@ -602,12 +602,10 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0;
-  color: #111827;
 }
 
 .subtitle {
   margin: 0.25rem 0 0;
-  color: #6b7280;
   font-size: 0.9rem;
 }
 

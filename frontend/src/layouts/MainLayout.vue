@@ -26,7 +26,7 @@
       </template>
 
       <v-list nav density="comfortable">
-        <v-list-item to="/" title="Home" prepend-icon="mdi-home" class="nav-item" />
+        <v-list-item to="/" title="Home" prepend-icon="mdi-home" class="nav-item" exact />
         <v-list-item to="/clientes" title="Clientes" prepend-icon="mdi-account-group" class="nav-item" />
         <v-list-item
           v-if="modulesStore.enabledModules.leads"
@@ -91,6 +91,10 @@
 
       <template #append>
         <div class="sidebar-footer">
+          <div class="sidebar-powered">
+            <span class="sidebar-powered-text">Powered by One Cup Tech Solutions</span>
+            <img src="/one-cup-logo.png" alt="One Cup Tech Solutions" class="sidebar-powered-logo" />
+          </div>
           <v-list nav density="comfortable">
             <v-list-item @click="handleLogout" title="Sair" prepend-icon="mdi-logout" class="nav-item" />
           </v-list>
@@ -124,8 +128,8 @@
           </div>
         </div>
         <div class="user-area">
-          <v-btn icon variant="text" class="bell-btn" aria-label="Notificações">
-            <v-icon icon="mdi-bell-outline" />
+          <v-btn icon size="small" variant="text" class="bell-btn" aria-label="Notificações">
+            <v-icon icon="mdi-bell-outline" size="20" />
           </v-btn>
           <v-menu location="bottom end">
             <template #activator="{ props }">
@@ -178,12 +182,6 @@
         </v-btn>
       </v-bottom-navigation>
 
-      <footer v-if="!mobile" class="global-footer">
-        <div class="footer-content">
-          <span class="footer-company">Powered by One Cup Tech Solutions</span>
-          <img src="/one-cup-logo.png" alt="One Cup Tech Solutions" class="footer-logo" />
-        </div>
-      </footer>
     </v-main>
 
     <v-snackbar
@@ -275,16 +273,15 @@ function handleLogout() {
 
 <style scoped>
 .layout {
-  height: 100vh;
-  overflow: hidden;
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
 }
 
 .sidebar {
-  background:
-    radial-gradient(500px 280px at 0% 0%, rgba(215, 177, 111, 0.12), transparent 62%),
-    linear-gradient(180deg, #0d0f16 0%, #0a0c13 100%);
+  background: #434347; /* User requested color */
   color: #e9ddc6;
-  border-right: 1px solid rgba(215, 177, 111, 0.22);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar :deep(.v-navigation-drawer__content) {
@@ -294,7 +291,35 @@ function handleLogout() {
 
 .sidebar-footer {
   border-top: 1px solid rgba(215, 177, 111, 0.22);
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
+}
+
+.sidebar-powered {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.35rem 0.85rem 0.45rem;
+  margin: 0 0.35rem 0.25rem;
+  border: 1px solid rgba(215, 177, 111, 0.2);
+  border-radius: 10px;
+  background: rgba(215, 177, 111, 0.05);
+}
+
+.sidebar-powered-text {
+  font-size: 0.67rem;
+  line-height: 1.2;
+  color: #c5b083;
+  font-weight: 600;
+}
+
+.sidebar-powered-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: radial-gradient(circle at 45% 35%, #f8e7c8 0%, #d2a764 100%);
+  border: 1px solid rgba(215, 177, 111, 0.4);
 }
 
 .brand {
@@ -312,20 +337,19 @@ function handleLogout() {
   height: 44px;
   border-radius: 50%;
   overflow: hidden;
+  background: #fff; /* Harmonize with white logo background */
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1.5px solid rgba(215, 177, 111, 0.4);
   flex-shrink: 0;
-  border: 1px solid rgba(215, 177, 111, 0.46);
-  background: radial-gradient(circle at 50% 40%, #f9e8cb 0%, #d3aa69 100%);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 12px rgba(215, 177, 111, 0.15);
 }
 
 .brand-logo {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 2px;
+  object-fit: contain; /* Ensure full logo is visible */
 }
 
 .brand-logo-placeholder {
@@ -339,8 +363,9 @@ function handleLogout() {
 
 .brand-text {
   line-height: 1;
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.06em;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .nav-item :deep(.v-list-item__prepend) {
@@ -370,22 +395,22 @@ function handleLogout() {
 
 .main {
   background:
-    radial-gradient(1020px 560px at 84% -10%, rgba(215, 177, 111, 0.1), transparent 55%),
-    radial-gradient(900px 700px at 0% 96%, rgba(86, 95, 124, 0.22), transparent 64%),
-    linear-gradient(180deg, #0a0b10 0%, #0e1017 100%);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow-y: auto;
+    radial-gradient(980px 520px at 86% -4%, rgba(215, 177, 111, 0.11), transparent 58%),
+    radial-gradient(840px 620px at 0% 100%, rgba(144, 154, 171, 0.2), transparent 62%),
+    linear-gradient(180deg, #d6d9e0 0%, #c9ced7 100%);
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  overflow: hidden !important;
 }
 
 .top-shell {
   position: sticky;
   top: 0;
   z-index: 3;
-  padding: 0.1rem 4.5rem 0.1rem 2rem;
-  background: rgba(9, 11, 17, 0.78);
-  border-bottom: 1px solid rgba(215, 177, 111, 0.16);
+  padding: 0.6rem 2rem;
+  background: linear-gradient(90deg, rgba(58, 58, 61, 0.98) 0%, rgba(72, 73, 77, 0.98) 100%);
+  border-bottom: 1px solid rgba(215, 177, 111, 0.24);
   backdrop-filter: blur(12px);
 }
 
@@ -412,7 +437,7 @@ function handleLogout() {
   height: 30px;
   border-radius: 9px;
   border: 1px solid rgba(215, 177, 111, 0.32);
-  background: rgba(215, 177, 111, 0.11);
+  background: #fff; /* Match logo background */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -424,18 +449,18 @@ function handleLogout() {
 .top-brand-logo-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Don't cut logo edges */
   transform-origin: center;
 }
 
 .top-brand-text {
   color: #f0e3c8;
-  font-weight: 800;
+  font-weight: 600;
   font-size: 0.95rem;
   line-height: 1;
   white-space: nowrap;
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.06em;
+  font-family: 'Manrope', sans-serif;
+  letter-spacing: 0;
 }
 
 .breadcrumbs-wrap {
@@ -448,30 +473,44 @@ function handleLogout() {
 
 .user-area {
   position: absolute;
-  top: 3px;
+  top: 50%;
   right: 2rem;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.5rem;
 }
 
 .content {
   width: 100%;
   max-width: 1520px;
   margin: 0 auto;
-  padding: 0.95rem 2rem 2rem;
+  padding: 1rem 2rem 2.5rem;
+  background: linear-gradient(180deg, #d4d8df 0%, #c8cdd6 100%);
+  border-left: 1px solid rgba(145, 153, 167, 0.35);
+  border-right: 1px solid rgba(145, 153, 167, 0.35);
   flex: 1 1 auto;
-  overflow-y: auto;
+  overflow-y: auto !important;
+  scrollbar-width: auto;
 }
 
-.global-footer {
-  background: linear-gradient(180deg, #10131b 0%, #0d1016 100%);
-  border-top: 1px solid rgba(215, 177, 111, 0.18);
-  padding: 0.45rem 2rem;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.content::-webkit-scrollbar {
+  width: 12px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.08); /* Slightly darker track */
+}
+
+.content::-webkit-scrollbar-thumb {
+  background-color: #654d2c; /* Much darker, visible bronze */
+  border-radius: 6px;
+  border: 2px solid #c8cdd6; /* Border to pop against the background */
+  background-clip: padding-box;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background-color: #4a3820; /* Even darker on hover */
 }
 
 :deep(.v-bottom-navigation) {
@@ -487,25 +526,6 @@ function handleLogout() {
   color: #f0d8ab !important;
 }
 
-.footer-content {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.footer-logo {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  border-radius: 50%;
-}
-
-.footer-company {
-  font-size: 0.8rem;
-  color: #c9b78f;
-  font-weight: 600;
-}
-
 .avatar {
   background: linear-gradient(135deg, #d8bc89 0%, #a97a41 100%);
   color: #15110b;
@@ -518,16 +538,17 @@ function handleLogout() {
 }
 
 .bell-btn {
-  color: #dec38f;
-  border: 1px solid rgba(215, 177, 111, 0.3);
-  background: rgba(215, 177, 111, 0.08);
+  color: #d7b16f;
+  border: 1px solid rgba(215, 177, 111, 0.24);
+  background: rgba(215, 177, 111, 0.04);
+  border-radius: 10px !important;
 }
 
 .user-menu-card {
   border-radius: 12px;
   border: 1px solid rgba(215, 177, 111, 0.24);
-  background: #141822;
-  color: #f0e8db;
+  background: #f4f6fa;
+  color: #1f242d;
 }
 
 .avatar :deep(img) {
@@ -555,7 +576,7 @@ function handleLogout() {
   }
   
   .top-shell.mobile-header {
-    background: #0f121a;
+    background: linear-gradient(90deg, rgba(58, 58, 61, 0.98) 0%, rgba(72, 73, 77, 0.98) 100%);
     border-bottom: 1px solid rgba(215, 177, 111, 0.2);
     padding: 0.75rem 1rem;
   }
@@ -595,6 +616,7 @@ function handleLogout() {
 
   .content {
     padding: 0.7rem 0.6rem 1rem;
+    border-radius: 8px;
   }
 
   .user-area {
@@ -602,17 +624,9 @@ function handleLogout() {
     top: 4px;
   }
 
-  .global-footer {
-    padding: 0.35rem 0.5rem;
-  }
-
-  .footer-company {
-    font-size: 0.72rem;
-  }
-
-  .footer-logo {
-    width: 22px;
-    height: 22px;
+  .sidebar-powered {
+    margin: 0 0.25rem 0.2rem;
+    padding: 0.3rem 0.7rem;
   }
 }
 </style>

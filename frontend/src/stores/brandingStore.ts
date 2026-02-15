@@ -15,6 +15,12 @@ export interface BrandingSettings {
   email: string
   telefone: string
   endereco: string
+  cep: string
+  logradouro: string
+  numero: string
+  complemento: string
+  cidade: string
+  uf: string
   website: string
   cnpj: string
 }
@@ -34,6 +40,12 @@ const defaultBranding: BrandingSettings = {
   email: '',
   telefone: '',
   endereco: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  cidade: '',
+  uf: '',
   website: '',
   cnpj: '',
 }

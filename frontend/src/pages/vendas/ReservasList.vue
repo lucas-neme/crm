@@ -361,11 +361,9 @@ onMounted(() => {
 
 .page-title {
   margin: 0;
-  color: #111827;
 }
 
 .summary-text {
-  color: #6b7280;
   font-size: 0.9rem;
   margin-top: 0.25rem;
 }

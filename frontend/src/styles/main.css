@@ -1,42 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --crm-bg: #0b0b11;
-  --crm-bg-soft: #11131b;
-  --crm-surface: #171a24;
-  --crm-surface-2: #1d2230;
-  --crm-border: rgba(215, 177, 111, 0.28);
-  --crm-border-soft: rgba(255, 255, 255, 0.12);
-  --crm-text: #f4efe3;
-  --crm-text-soft: #c6c0b4;
-  --crm-muted: #9c978d;
+  --crm-bg: #cfd2d8;
+  --crm-bg-soft: #d8dbe1;
+  --crm-surface: #f4f5f7;
+  --crm-surface-2: #eceef2;
+  --crm-border: rgba(150, 157, 170, 0.35);
+  --crm-border-soft: rgba(167, 174, 187, 0.3);
+  --crm-text: #1f242d;
+  --crm-text-soft: #5b6472;
+  --crm-muted: #737b8a;
   --crm-gold: #d7b16f;
   --crm-gold-strong: #ecc788;
   --crm-success: #4f9e72;
   --crm-danger: #cc6565;
-  --crm-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --crm-shadow: 0 12px 28px rgba(52, 60, 74, 0.12);
 }
 
 html,
 body,
-#app {
-  height: 100%;
+#app,
+.v-application,
+.v-application__wrap {
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 body {
   margin: 0;
+  overflow: hidden; /* Prevent body scrollbar */
   font-family: 'Manrope', sans-serif;
   color: var(--crm-text);
   background:
-    radial-gradient(1200px 520px at 74% 4%, rgba(215, 177, 111, 0.12), transparent 56%),
-    radial-gradient(1000px 560px at 6% 100%, rgba(76, 87, 121, 0.18), transparent 55%),
-    linear-gradient(180deg, #090a0f 0%, #0c0d14 100%);
+    radial-gradient(1200px 560px at 80% 0%, rgba(216, 185, 129, 0.13), transparent 55%),
+    radial-gradient(1000px 620px at 6% 100%, rgba(120, 130, 148, 0.18), transparent 58%),
+    linear-gradient(180deg, #d5d8de 0%, #c8ccd4 100%);
 }
 
 .v-application {
   font-family: 'Manrope', sans-serif !important;
   background: transparent !important;
-  color: var(--crm-text) !important;
+  color: #1f242d !important;
 }
 
 .v-main {
@@ -49,27 +56,31 @@ h3,
 h4,
 .page-title,
 .section-title {
-  font-family: 'Cinzel', serif !important;
-  letter-spacing: 0.04em;
+  font-family: 'Manrope', sans-serif !important;
+  letter-spacing: 0;
+  color: var(--crm-gold) !important;
+}
+
+.subtitle {
+  color: #5f6674 !important;
+  opacity: 0.8;
 }
 
 .v-card,
 .section-card,
 .stats-card,
 .form-section {
-  background:
-    linear-gradient(145deg, rgba(26, 28, 38, 0.92) 0%, rgba(16, 18, 27, 0.96) 100%) !important;
+  background: linear-gradient(180deg, #f5f6f8 0%, #eef1f5 100%) !important;
   border: 1px solid var(--crm-border-soft) !important;
-  color: var(--crm-text) !important;
+  color: #1f242d !important;
   box-shadow: var(--crm-shadow) !important;
-  backdrop-filter: blur(3px);
 }
 
 .v-card-title,
 .v-card-text,
 .v-label,
 .v-field-label {
-  color: var(--crm-text-soft) !important;
+  color: #5b6472 !important;
 }
 
 .v-field {
@@ -78,7 +89,7 @@ h4,
 
 .v-field--variant-outlined .v-field__outline {
   --v-field-border-opacity: 1 !important;
-  color: rgba(214, 177, 111, 0.38) !important;
+  color: rgba(154, 162, 176, 0.45) !important;
 }
 
 .v-field--focused .v-field__outline {
@@ -88,7 +99,7 @@ h4,
 .v-field__input,
 input,
 textarea {
-  color: var(--crm-text) !important;
+  color: #1f242d !important;
 }
 
 .v-btn {
@@ -102,11 +113,21 @@ textarea {
   box-shadow: 0 8px 26px rgba(191, 143, 80, 0.4) !important;
 }
 
+/* Premium Green style for Success/Excel buttons */
+.v-btn.v-btn--variant-flat.bg-success,
+.v-btn.v-btn--variant-flat.v-btn--color-success,
+.v-btn.v-btn--variant-elevated.bg-success,
+.v-btn.v-btn--variant-elevated.v-btn--color-success {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(46, 125, 50, 0.4) !important;
+}
+
 .v-btn.v-btn--variant-outlined,
 .v-btn.v-btn--variant-tonal,
 .v-btn.v-btn--variant-text {
-  color: var(--crm-gold) !important;
-  border-color: rgba(215, 177, 111, 0.3) !important;
+  color: #8f6d3e !important;
+  border-color: rgba(171, 136, 79, 0.28) !important;
 }
 
 .v-btn:hover {
@@ -116,24 +137,24 @@ textarea {
 .v-table,
 .v-data-table,
 .v-data-table__wrapper table {
-  background: transparent !important;
-  color: var(--crm-text) !important;
+  background: #f8f9fb !important;
+  color: #1f242d !important;
 }
 
 .v-table th,
 .v-data-table th {
   font-weight: 700 !important;
-  color: #e4d1a9 !important;
-  border-bottom: 1px solid rgba(215, 177, 111, 0.25) !important;
+  color: #8f6d3e !important;
+  border-bottom: 1px solid rgba(170, 176, 188, 0.35) !important;
 }
 
 .v-table td,
 .v-data-table td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-bottom: 1px solid rgba(178, 184, 195, 0.25) !important;
 }
 
 .v-data-table tbody tr:hover {
-  background: rgba(215, 177, 111, 0.08) !important;
+  background: rgba(215, 177, 111, 0.12) !important;
 }
 
 .v-chip {
@@ -146,15 +167,15 @@ textarea {
 
 .v-dialog .v-card,
 .v-overlay__content .v-card {
-  background: linear-gradient(160deg, #181b25 0%, #12141d 100%) !important;
+  background: linear-gradient(180deg, #f6f7f9 0%, #eef1f5 100%) !important;
 }
 
 .v-pagination__item,
 .v-pagination__next,
 .v-pagination__prev {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(215, 177, 111, 0.22) !important;
-  color: var(--crm-text) !important;
+  background: #f2f4f8 !important;
+  border: 1px solid rgba(169, 176, 188, 0.32) !important;
+  color: #1f242d !important;
 }
 
 .v-pagination__item--is-active {
@@ -163,7 +184,7 @@ textarea {
 }
 
 .v-divider {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(166, 173, 184, 0.25) !important;
 }
 
 .action-icon-btn {
@@ -171,14 +192,14 @@ textarea {
   height: 44px !important;
   min-width: 44px !important;
   border-radius: 50% !important;
-  background: rgba(215, 177, 111, 0.13) !important;
-  color: var(--crm-gold) !important;
-  border: 1px solid rgba(215, 177, 111, 0.35) !important;
+  background: rgba(172, 140, 87, 0.08) !important;
+  color: #8f6d3e !important;
+  border: 1px solid rgba(172, 140, 87, 0.26) !important;
   transition: all 0.2s ease !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 6px 16px rgba(60, 70, 85, 0.16) !important;
 }
 
 .action-icon-btn:hover {
@@ -233,4 +254,3 @@ textarea {
     font-size: 28px !important;
   }
 }
-

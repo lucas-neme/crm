@@ -108,3 +108,14 @@ export function maskDocument(value: string, tipoPessoa: string): string {
       return value
   }
 }
+
+/**
+ * Aplica máscara de CEP
+ * @param value - Valor do input
+ * @returns CEP mascarado: XXXXX-XXX
+ */
+export function maskCEP(value: string): string {
+  const v = value.replace(/\D/g, '').substring(0, 8)
+  if (v.length <= 5) return v
+  return v.replace(/(\d{5})(\d{1,3})/, '$1-$2')
+}

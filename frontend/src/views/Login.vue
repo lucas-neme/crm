@@ -463,23 +463,23 @@ async function handleResetPassword() {
 }
 
 .mobile-logo-wrap {
-  width: 92px;
-  height: 92px;
+  width: 100px;
+  height: 100px;
   margin: 0 auto 14px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 45% 35%, #f8e7c8 0%, #d2a764 100%);
-  border: 1px solid rgba(215, 177, 111, 0.7);
+  border-radius: 20px;
+  background: white;
+  border: 1px solid rgba(215, 177, 111, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-logo {
   width: 100%;
   height: 100%;
-  padding: 10px;
+  padding: 8px;
   object-fit: contain;
-  mix-blend-mode: multiply;
 }
 
 .mobile-title {
@@ -488,7 +488,7 @@ async function handleResetPassword() {
   color: #f3e8d3;
   font-weight: 800;
   line-height: 1.05;
-  font-family: 'Cinzel', serif;
+  font-family: 'Manrope', sans-serif;
   letter-spacing: 0.05em;
 }
 
@@ -513,7 +513,7 @@ async function handleResetPassword() {
   font-weight: 800;
   font-size: 1.95rem;
   line-height: 1.1;
-  font-family: 'Cinzel', serif;
+  font-family: 'Manrope', sans-serif;
 }
 
 .forgot-link {
@@ -571,20 +571,22 @@ async function handleResetPassword() {
 }
 
 .brand-logo-wrap {
-  width: 86px;
-  height: 86px;
-  border-radius: 20px;
-  background: radial-gradient(circle at 45% 35%, #f8e7c8 0%, #d2a764 100%);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  width: 110px;
+  height: 110px;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 1.5px solid rgba(215, 177, 111, 0.3);
 }
 
 .brand-logo {
-  width: 56px;
-  height: 56px;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
   object-fit: contain;
 }
 
@@ -603,7 +605,7 @@ async function handleResetPassword() {
   line-height: 1;
   color: #f2e7d3;
   font-weight: 800;
-  font-family: 'Cinzel', serif;
+  font-family: 'Manrope', sans-serif;
   letter-spacing: 0.05em;
 }
 
@@ -716,7 +718,7 @@ async function handleResetPassword() {
   margin: 0 0 6px;
   font-size: 24px;
   color: #f2e6cf;
-  font-family: 'Cinzel', serif;
+  font-family: 'Manrope', sans-serif;
 }
 
 .helper-text {
@@ -798,4 +800,3 @@ async function handleResetPassword() {
   }
 }
 </style>
-

@@ -70,12 +70,12 @@
           class="column-card"
           :class="{ 'drop-target': overStageId === stage.id }"
           variant="flat"
-          color="grey-lighten-4"
+          color="rgba(255, 255, 255, 0.04)"
           @dragover.prevent="onDragOver(stage.id)"
           @dragleave="onDragLeave(stage.id)"
           @drop.prevent="onDrop(stage.id)"
         >
-          <v-card-title class="d-flex justify-space-between align-center py-2 px-3 bg-grey-lighten-2">
+          <v-card-title class="d-flex justify-space-between align-center py-2 px-3 bg-grey-darken-4">
             <span class="text-subtitle-2 font-weight-bold">{{ stage.title }}</span>
             <v-chip size="x-small" color="primary" variant="flat">{{ getLeadsInStage(stage.id).length }}</v-chip>
           </v-card-title>
@@ -336,7 +336,6 @@ onMounted(() => {
 
 .page-title {
   margin: 0;
-  color: #111827;
 }
 
 .funnel-summary {

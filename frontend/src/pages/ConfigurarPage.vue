@@ -74,88 +74,46 @@
               <v-card elevation="2" class="form-card mb-4">
                 <v-card-title class="section-title">Endereço</v-card-title>
                 <v-card-text>
-                  <v-textarea
-                    v-model="form.endereco"
-                    label="Endereço completo"
-                    rows="3"
-                    auto-grow
-                    hide-details="auto"
-                  />
+                  <v-row>
+                    <v-col cols="12" md="3">
+                      <v-text-field
+                        v-model="form.cep"
+                        label="CEP"
+                        placeholder="00000-000"
+                        maxlength="9"
+                        @update:model-value="onCepInput"
+                        append-inner-icon="mdi-magnify"
+                        @click:append-inner="buscarCep"
+                        :loading="buscandoCep"
+                      />
+                    </v-col>
+                    <v-col cols="12" md="7">
+                      <v-text-field v-model="form.logradouro" label="Logradouro" placeholder="Ex: Rua das Flores" />
+                    </v-col>
+                    <v-col cols="12" md="2">
+                      <v-text-field v-model="form.numero" label="Número" />
+                    </v-col>
+                    <v-col cols="12" md="4">
+                      <v-text-field v-model="form.complemento" label="Complemento" placeholder="Ex: Sala 201" />
+                    </v-col>
+                    <v-col cols="12" md="5">
+                      <v-text-field v-model="form.cidade" label="Cidade" />
+                    </v-col>
+                    <v-col cols="12" md="3">
+                      <v-select
+                        v-model="form.uf"
+                        :items="estados"
+                        item-title="nome"
+                        item-value="sigla"
+                        label="Estado"
+                      />
+                    </v-col>
+                  </v-row>
                 </v-card-text>
               </v-card>
-
-              <v-card elevation="2" class="form-card mb-4">
-                <v-card-title class="section-title d-flex align-center">
-                  <v-icon icon="mdi-shield-lock-outline" class="mr-2" color="primary" />
-                  Segurança
-                </v-card-title>
-                <v-card-text>
-                  <v-btn
-                    v-if="!showPasswordChange"
-                    variant="text"
-                    color="primary"
-                    class="text-none px-0"
-                    prepend-icon="mdi-lock-reset"
-                    @click="showPasswordChange = true"
-                  >
-                    Alterar minha senha
-                  </v-btn>
-
-                  <v-expand-transition>
-                    <div v-if="showPasswordChange" class="mt-4">
-                      <v-row>
-                        <v-col cols="12" md="6">
-                          <v-text-field
-                            v-model="personalPasswordForm.password"
-                            label="Nova senha"
-                            type="password"
-                            variant="outlined"
-                            density="comfortable"
-                            prepend-inner-icon="mdi-lock-outline"
-                            hint="Mínimo de 6 caracteres"
-                            persistent-hint
-                          />
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <v-text-field
-                            v-model="personalPasswordForm.confirmPassword"
-                            label="Confirmar nova senha"
-                            type="password"
-                            variant="outlined"
-                            density="comfortable"
-                            prepend-inner-icon="mdi-lock-check-outline"
-                          />
-                        </v-col>
-                      </v-row>
-                      <div class="d-flex justify-end mt-4">
-                        <v-btn
-                          variant="text"
-                          class="mr-2 text-none"
-                          @click="showPasswordChange = false"
-                        >
-                          Cancelar
-                        </v-btn>
-                        <v-btn
-                          color="primary"
-                          class="text-none"
-                          :loading="savingPersonalPassword"
-                          @click="savePersonalPassword"
-                        >
-                          Atualizar senha
-                        </v-btn>
-                      </div>
-                    </div>
-                  </v-expand-transition>
-                </v-card-text>
-              </v-card>
-
-              <div class="form-actions mt-4">
-                <v-btn variant="tonal" to="/" class="text-none">Cancelar</v-btn>
-                <v-btn color="primary" type="submit" class="text-none">Salvar</v-btn>
-              </div>
             </v-col>
 
-            <v-col cols="12" md="4" class="logo-column">
+            <v-col cols="12" md="4" class="logo-column order-2">
               <v-card elevation="2" class="form-card logo-card">
                 <v-card-title class="section-title d-flex align-center justify-space-between">
                   <span>Logo do CRM</span>
@@ -170,11 +128,11 @@
                       @click="removerLogo"
                     />
                     <v-btn
-                      :icon="editandoLogo ? 'mdi-close' : 'mdi-pencil'"
+                      :icon="editandoLogo ? 'mdi-check' : 'mdi-pencil'"
                       size="small"
                       variant="text"
                       color="primary"
-                      @click="editandoLogo ? cancelarEdicaoLogo() : iniciarEdicaoLogo()"
+                      @click="editandoLogo ? concluirEdicaoLogo() : iniciarEdicaoLogo()"
                     />
                   </div>
                 </v-card-title>
@@ -249,8 +207,10 @@
                     </div>
 
                     <div v-if="editandoLogo" class="logo-footer-actions">
-                      <v-btn variant="outlined" class="text-none" @click="cancelarEdicaoLogo">Cancelar</v-btn>
-                      <v-btn color="primary" variant="flat" class="text-none" @click="salvarEdicaoLogo">Salvar logo</v-btn>
+                      <v-btn color="success" variant="flat" block class="text-none mt-4" @click="concluirEdicaoLogo">
+                        <v-icon icon="mdi-check" class="mr-2" />
+                        Concluir ajuste
+                      </v-btn>
                     </div>
                   </div>
                 </v-card-text>
@@ -317,6 +277,75 @@
                   </div>
                 </v-card-text>
               </v-card>
+            </v-col>
+
+            <v-col cols="12" md="8" class="order-3">
+              <v-card elevation="2" class="form-card mb-4">
+                <v-card-title class="section-title d-flex align-center">
+                  <v-icon icon="mdi-shield-lock-outline" class="mr-2" color="primary" />
+                  Segurança
+                </v-card-title>
+                <v-card-text>
+                  <p class="text-body-2 text-grey-darken-1 mb-4">
+                    Para sua segurança, você pode alterar sua senha de acesso a qualquer momento.
+                  </p>
+                  
+                  <v-btn
+                    v-if="!showPasswordChange"
+                    variant="text"
+                    color="primary"
+                    class="text-none px-0"
+                    prepend-icon="mdi-lock-reset"
+                    @click="showPasswordChange = true"
+                  >
+                    Alterar minha senha
+                  </v-btn>
+
+                  <v-expand-transition>
+                    <div v-if="showPasswordChange" class="mt-4">
+                      <v-row>
+                        <v-col cols="12" md="6">
+                          <v-text-field
+                            v-model="personalPasswordForm.password"
+                            label="Nova senha"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-lock-outline"
+                            hint="Mínimo de 6 caracteres"
+                            persistent-hint
+                          />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-text-field
+                            v-model="personalPasswordForm.confirmPassword"
+                            label="Confirmar nova senha"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-lock-check-outline"
+                          />
+                        </v-col>
+                      </v-row>
+                      <div class="d-flex justify-end mt-2">
+                        <v-btn
+                          variant="text"
+                          class="text-none"
+                          size="small"
+                          @click="showPasswordChange = false; personalPasswordForm.password = ''; personalPasswordForm.confirmPassword = ''"
+                        >
+                          Cancelar alteração
+                        </v-btn>
+                      </div>
+                    </div>
+                  </v-expand-transition>
+                </v-card-text>
+              </v-card>
+
+              <div class="form-actions mt-6">
+                <v-btn variant="tonal" to="/" class="text-none px-8" size="large">Cancelar</v-btn>
+                <v-btn color="primary" type="submit" class="text-none px-12" size="large" :loading="salvando">Salvar Tudo</v-btn>
+              </div>
             </v-col>
           </v-row>
         </v-form>
@@ -633,8 +662,9 @@ import { useAuthStore } from '../stores/authStore'
 import { useBrandingStore } from '../stores/brandingStore'
 import { useModulesStore } from '../stores/modulesStore'
 import { useUsersStore } from '../stores/usersStore'
+import { useClientesStore } from '../stores/clientesStore'
 import { notificationsStore } from '../stores/notificationsStore'
-import { maskCNPJ, maskPhone } from '../utils/formatters'
+import { maskCNPJ, maskPhone, maskCEP } from '../utils/formatters'
 import { getApiBaseUrl } from '../utils/apiBase'
 import { resolveTenantHint } from '../utils/tenantHint'
 import { resizeImage } from '../utils/imageUtils'
@@ -643,6 +673,7 @@ const { branding, salvarBranding, carregarBrandingPublico, salvarBrandingRemoto 
 const authStore = useAuthStore()
 const modulesStore = useModulesStore()
 const usersStore = useUsersStore()
+const clientesStore = useClientesStore()
 
 const activeTab = ref('geral')
 const logoInput = ref<HTMLInputElement | null>(null)
@@ -692,7 +723,6 @@ const passwordForm = ref({
 
 // Novos controles para mudança de senha pessoal
 const showPasswordChange = ref(false)
-const savingPersonalPassword = ref(false)
 const personalPasswordForm = ref({
   password: '',
   confirmPassword: '',
@@ -731,6 +761,12 @@ const form = ref({
   email: branding.value.email,
   telefone: branding.value.telefone,
   endereco: branding.value.endereco,
+  cep: branding.value.cep,
+  logradouro: branding.value.logradouro,
+  numero: branding.value.numero,
+  complemento: branding.value.complemento,
+  cidade: branding.value.cidade,
+  uf: branding.value.uf,
   website: branding.value.website,
   cnpj: branding.value.cnpj,
 })
@@ -749,6 +785,12 @@ const syncFormFromBranding = () => {
     email: branding.value.email,
     telefone: branding.value.telefone,
     endereco: branding.value.endereco,
+    cep: branding.value.cep || '',
+    logradouro: branding.value.logradouro || '',
+    numero: branding.value.numero || '',
+    complemento: branding.value.complemento || '',
+    cidade: branding.value.cidade || '',
+    uf: branding.value.uf || '',
     website: branding.value.website,
     cnpj: branding.value.cnpj,
   }
@@ -801,7 +843,42 @@ onMounted(async () => {
   // Garantir que carregue com máscara se já houver dados
   if (form.value.cnpj) form.value.cnpj = maskCNPJ(form.value.cnpj)
   if (form.value.telefone) form.value.telefone = maskPhone(form.value.telefone)
+  if (form.value.cep) form.value.cep = maskCEP(form.value.cep)
+  
+  await carregarEstados()
 })
+
+const estados = ref<{ nome: string; sigla: string }[]>([])
+const buscandoCep = ref(false)
+
+const carregarEstados = async () => {
+  const reps = await clientesStore.carregarEstados()
+  estados.value = reps || []
+}
+
+const onCepInput = (val: string) => {
+  form.value.cep = maskCEP(val || '')
+  if (form.value.cep.length === 9) {
+    buscarCep()
+  }
+}
+
+const buscarCep = async () => {
+  if (form.value.cep.length < 9) return
+  buscandoCep.value = true
+  try {
+    const res = await clientesStore.buscarCEP(form.value.cep)
+    if (res) {
+      form.value.logradouro = res.logradouro || ''
+      form.value.cidade = res.cidade || ''
+      form.value.uf = res.estado || ''
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    buscandoCep.value = false
+  }
+}
 
 const logoPreviewStyle = computed(() => ({
   transform: `translate(${form.value.logoOffsetX || 0}px, ${form.value.logoOffsetY || 0}px) scale(${form.value.logoScale / 100})`,
@@ -844,24 +921,8 @@ const iniciarEdicaoLogo = () => {
   editandoLogo.value = true
 }
 
-const cancelarEdicaoLogo = () => {
-  form.value.logoUrl = logoSnapshot.value.logoUrl
-  form.value.logoScale = logoSnapshot.value.logoScale
-  form.value.logoOffsetX = logoSnapshot.value.logoOffsetX
-  form.value.logoOffsetY = logoSnapshot.value.logoOffsetY
-  previewUrl.value = logoSnapshot.value.logoUrl
+const concluirEdicaoLogo = () => {
   editandoLogo.value = false
-}
-
-const salvarEdicaoLogo = () => {
-  salvarBranding({
-    logoUrl: form.value.logoUrl,
-    logoScale: form.value.logoScale,
-    logoOffsetX: form.value.logoOffsetX,
-    logoOffsetY: form.value.logoOffsetY,
-  })
-  editandoLogo.value = false
-  notificationsStore.notify('Logo atualizada com sucesso.', 'success')
 }
 
 const handleLogoUpload = async (event: Event) => {
@@ -969,31 +1030,6 @@ const savePermissions = async () => {
   }
 }
 
-const savePersonalPassword = async () => {
-  if (!personalPasswordForm.value.password) {
-    notificationsStore.notify('Digite a nova senha', 'warning')
-    return
-  }
-  if (personalPasswordForm.value.password !== personalPasswordForm.value.confirmPassword) {
-    notificationsStore.notify('As senhas não coincidem', 'error')
-    return
-  }
-
-  savingPersonalPassword.value = true
-  try {
-    if (!authStore.user?.id) throw new Error('Usuário não identificado')
-
-    await usersStore.changePassword(authStore.user.id, personalPasswordForm.value.password)
-
-    notificationsStore.notify('Senha atualizada com sucesso!', 'success')
-    showPasswordChange.value = false
-    personalPasswordForm.value = { password: '', confirmPassword: '' }
-  } catch (error: any) {
-    notificationsStore.notify(error.message || 'Erro ao atualizar senha', 'error')
-  } finally {
-    savingPersonalPassword.value = false
-  }
-}
 
 const onUserPhoneInput = (value: string) => {
   editableUserProfile.value.phone = maskPhone(value || '')
@@ -1055,9 +1091,39 @@ const salvar = async () => {
   salvando.value = true
   erroModulo.value = ''
   try {
+    // 1. Salvar branding
+    // Construct address summary for compatibility
+    const parts = []
+    if (form.value.logradouro) parts.push(form.value.logradouro)
+    if (form.value.numero) parts.push(form.value.numero)
+    if (form.value.complemento) parts.push(form.value.complemento)
+    let summary = parts.join(', ')
+    if (form.value.cidade || form.value.uf) {
+      summary += (summary ? ' - ' : '') + `${form.value.cidade}/${form.value.uf}`
+    }
+    if (form.value.cep) summary += (summary ? ' ' : '') + `(CEP: ${form.value.cep})`
+    form.value.endereco = summary
+
     salvarBranding(form.value)
     await salvarBrandingRemoto(authStore.token || '', authStore.user?.tenantId)
+    
+    // 2. Persistir frase de login
     await persistLoginPhraseConfig()
+
+    // 3. Salvar senha se preenchida
+    if (personalPasswordForm.value.password) {
+      if (personalPasswordForm.value.password !== personalPasswordForm.value.confirmPassword) {
+        throw new Error('As senhas de segurança não coincidem.')
+      }
+      if (personalPasswordForm.value.password.length < 6) {
+        throw new Error('A nova senha deve ter pelo menos 6 caracteres.')
+      }
+      if (!authStore.user?.id) throw new Error('Usuário não identificado.')
+      
+      await usersStore.changePassword(authStore.user.id, personalPasswordForm.value.password)
+    }
+
+    // 4. Salvar configurações de admin se aplicável
     if (isSystemAdmin.value) {
       await modulesStore.setProdutoModulo(produtoModulo.value)
       await modulesStore.setEnabledModules(enabledModulesForm.value)
@@ -1069,9 +1135,10 @@ const salvar = async () => {
 
     localStorage.setItem('crm.showSavedSnackbar', 'true')
     window.location.href = '/'
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
-    erroModulo.value = 'Não foi possível salvar o tipo de CRM. Tente novamente.'
+    erroModulo.value = error.message || 'Não foi possível salvar as configurações. Tente novamente.'
+    notificationsStore.notify(erroModulo.value, 'error')
     salvando.value = false
   }
 }
@@ -1215,7 +1282,7 @@ const salvarModulo = async () => {
 .logo-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Harmony with background color */
   transform-origin: center;
   user-select: none;
   -webkit-user-drag: none;
