@@ -39,7 +39,8 @@ export class EmpreendimentoService {
     async update(tenantId: string, id: string, data: Partial<Empreendimento>): Promise<Empreendimento> {
         const empreendimento = await this.empreendimentoModel.findOne({ where: { id, tenantId } });
         if (!empreendimento) throw new Error('Empreendimento nao encontrado');
-        return empreendimento.update(data);
+        const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeData } = (data || {}) as any;
+        return empreendimento.update(safeData);
     }
 
     async remove(tenantId: string, id: string): Promise<void> {

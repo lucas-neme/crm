@@ -72,7 +72,8 @@ export class ReservaService {
         const reserva = await this.reservaModel.findOne({ where: { id, tenantId } });
         if (!reserva) throw new BadRequestException('Reserva nao encontrada');
 
-        return reserva.update(data);
+        const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeData } = (data || {}) as any;
+        return reserva.update(safeData);
     }
 
     async cancel(tenantId: string, id: string): Promise<void> {

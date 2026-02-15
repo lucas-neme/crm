@@ -2,6 +2,7 @@ import { Controller, ForbiddenException, Get, Post, Body, Param, Request, UseGua
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ConfiguracoesService } from '../services/configuracoes.service';
+import { getTenantId } from '@/common/tenant/tenant-request.util';
 
 @ApiTags('configuracoes')
 @ApiBearerAuth()
@@ -23,13 +24,13 @@ export class ConfiguracoesController {
     @Get()
     @ApiOperation({ summary: 'Obter todas as configurações' })
     async getAll(@Request() req: any) {
-        return this.configService.getAll(req.user?.tenantId || 'default');
+        return this.configService.getAll(getTenantId(req));
     }
 
     @Get(':chave')
     @ApiOperation({ summary: 'Obter uma configuração por chave' })
     async get(@Request() req: any, @Param('chave') chave: string) {
-        const tenantId = req.user?.tenantId || 'default';
+        const tenantId = getTenantId(req);
         const valor = await this.configService.getConfiguration(tenantId, chave);
         return { chave, valor };
     }
@@ -40,7 +41,7 @@ export class ConfiguracoesController {
         if (chave === 'produto_modulo' || chave === 'enabled_modules') {
             this.ensureSystemAdmin(req);
         }
-        const tenantId = req.user?.tenantId || 'default';
+        const tenantId = getTenantId(req);
         return this.configService.setConfiguration(tenantId, chave, valor);
     }
 }

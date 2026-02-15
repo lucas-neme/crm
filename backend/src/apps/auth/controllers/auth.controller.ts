@@ -1,17 +1,13 @@
-import { Body, Controller, ForbiddenException, Get, Headers, Param, Post, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Param, Post, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../services/auth.service';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { getTenantId } from '@/common/tenant/tenant-request.util';
 
 @ApiTags('autenticação')
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
-
-    private resolveTenantId(tenantHeader?: string): string {
-        const value = (tenantHeader || '').trim();
-        return value || 'default';
-    }
 
     private ensureSystemAdmin(req: any) {
         const isSystemAdmin = !!req?.user?.isSystemAdmin;
@@ -34,12 +30,12 @@ export class AuthController {
             },
         },
     })
-    async login(@Headers('x-tenant-id') tenantHeader: string, @Body() req: { email?: string; password?: string }) {
+    async login(@Request() request: any, @Body() req: { email?: string; password?: string }) {
         if (!req.email || !req.password) {
             throw new UnauthorizedException('Email and password are required');
         }
 
-        const tenantId = this.resolveTenantId(tenantHeader);
+        const tenantId = getTenantId(request);
         const user = await this.authService.validateUser(req.email, req.password, tenantId);
         if (!user) {
             throw new UnauthorizedException('Credenciais invalidas');
@@ -60,11 +56,11 @@ export class AuthController {
             },
         },
     })
-    async register(@Headers('x-tenant-id') tenantHeader: string, @Body() req: { name?: string; email?: string; password?: string }) {
+    async register(@Request() request: any, @Body() req: { name?: string; email?: string; password?: string }) {
         if (!req.name || !req.email || !req.password) {
             throw new UnauthorizedException('Name, email and password are required');
         }
-        return this.authService.register(req.name, req.email, req.password, this.resolveTenantId(tenantHeader));
+        return this.authService.register(req.name, req.email, req.password, getTenantId(request));
     }
 
     @Post('forgot-password')
@@ -77,11 +73,11 @@ export class AuthController {
             },
         },
     })
-    async forgotPassword(@Headers('x-tenant-id') tenantHeader: string, @Body() req: { email?: string }) {
+    async forgotPassword(@Request() request: any, @Body() req: { email?: string }) {
         if (!req.email) {
             throw new UnauthorizedException('Email is required');
         }
-        return this.authService.requestPasswordReset(req.email, this.resolveTenantId(tenantHeader));
+        return this.authService.requestPasswordReset(req.email, getTenantId(request));
     }
 
     @Post('reset-password')
@@ -95,11 +91,11 @@ export class AuthController {
             },
         },
     })
-    async resetPassword(@Body() req: { token?: string; password?: string }) {
+    async resetPassword(@Request() request: any, @Body() req: { token?: string; password?: string }) {
         if (!req.token || !req.password) {
             throw new UnauthorizedException('Token and password are required');
         }
-        return this.authService.resetPassword(req.token, req.password);
+        return this.authService.resetPassword(req.token, req.password, getTenantId(request));
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -116,7 +112,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Listar usuários com aprovação e permissões' })
     async getUsers(@Request() req: any) {
         this.ensureSystemAdmin(req);
-        return this.authService.listUsersWithPermissions(req.user?.tenantId || 'default');
+        return this.authService.listUsersWithPermissions(getTenantId(req));
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -125,7 +121,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Aprovar e ativar usuário' })
     async approveUser(@Request() req: any, @Param('id') id: string) {
         this.ensureSystemAdmin(req);
-        return this.authService.setUserActive(req.user?.tenantId || 'default', id, true);
+        return this.authService.setUserActive(getTenantId(req), id, true);
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -134,7 +130,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Revogar acesso do usuário' })
     async revokeUser(@Request() req: any, @Param('id') id: string) {
         this.ensureSystemAdmin(req);
-        return this.authService.setUserActive(req.user?.tenantId || 'default', id, false);
+        return this.authService.setUserActive(getTenantId(req), id, false);
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -143,7 +139,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Definir permissões do usuário por módulo/ação' })
     async setUserPermissions(@Request() req: any, @Param('id') id: string, @Body() body: { permissions: Record<string, any> }) {
         this.ensureSystemAdmin(req);
-        return this.authService.setUserPermissions(req.user?.tenantId || 'default', id, body?.permissions || {});
+        return this.authService.setUserPermissions(getTenantId(req), id, body?.permissions || {});
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -155,7 +151,7 @@ export class AuthController {
         @Param('id') id: string,
         @Body() body: { name?: string; email?: string; phone?: string; birthDate?: string },
     ) {
-        return this.authService.setUserProfile(req.user?.tenantId || 'default', id, body || {});
+        return this.authService.setUserProfile(getTenantId(req), id, body || {});
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -163,6 +159,6 @@ export class AuthController {
     @Post('users/:id/change-password')
     @ApiOperation({ summary: 'Alterar senha do usuário' })
     async setUserPassword(@Request() req: any, @Param('id') id: string, @Body() body: { password?: string }) {
-        return this.authService.setUserPassword(req.user?.tenantId || 'default', id, body?.password || '');
+        return this.authService.setUserPassword(getTenantId(req), id, body?.password || '');
     }
 }

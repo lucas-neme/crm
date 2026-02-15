@@ -9,6 +9,14 @@ export class Configuracao extends Model {
     @Column({
         type: DataType.STRING,
         allowNull: false,
+        field: 'tenant_id',
+    })
+    tenantId: string;
+
+    @PrimaryKey
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
     })
     chave: string;
 

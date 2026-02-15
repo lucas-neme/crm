@@ -14,22 +14,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         private userModel: typeof User,
     ) {
         super({
+            passReqToCallback: true,
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
             secretOrKey: configService.get<string>('JWT_SECRET') || 'default_secret_key', // Fallback for dev
         });
     }
 
-    async validate(payload: any): Promise<AuthenticatedUser> {
+    async validate(req: any, payload: any): Promise<AuthenticatedUser> {
         const user = await this.userModel.findByPk(payload.sub);
         if (!user || !user.isActive) {
             throw new UnauthorizedException();
+        }
+        const requestTenant = String(req?.tenantId || '').trim().toLowerCase();
+        const userTenant = String(user.tenantId || '').trim().toLowerCase();
+        const tokenTenant = String(payload.tenantId || '').trim().toLowerCase();
+        if (!requestTenant || !userTenant || !tokenTenant || requestTenant !== userTenant || tokenTenant !== userTenant) {
+            throw new UnauthorizedException('Tenant mismatch');
         }
         return {
             id: user.id,
             email: user.email,
             name: user.name,
-            tenantId: user.tenantId || payload.tenantId || 'default',
+            tenantId: userTenant,
             isActive: user.isActive,
             isSystemAdmin:
                 !!payload.isSystemAdmin ||

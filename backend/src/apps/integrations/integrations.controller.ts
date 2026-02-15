@@ -6,6 +6,7 @@ import { Negocio } from '../negocio/models/negocio.model';
 import { Produto } from '../produto/models/produto.model';
 import { Op } from 'sequelize';
 import { AuthGuard } from '@nestjs/passport';
+import { getTenantId } from '@/common/tenant/tenant-request.util';
 
 @ApiTags('integrações')
 @ApiBearerAuth()
@@ -31,7 +32,8 @@ export class IntegrationsController {
     @Query('dataInicio') dataInicio?: string,
     @Query('dataFim') dataFim?: string,
   ) {
-    const where: any = { tenantId: req.user?.tenantId || 'default' };
+    const tenantId = getTenantId(req);
+    const where: any = { tenantId };
 
     if (dataInicio || dataFim) {
       where.createdAt = {};
@@ -73,7 +75,8 @@ export class IntegrationsController {
     @Query('dataInicio') dataInicio?: string,
     @Query('dataFim') dataFim?: string,
   ) {
-    const where: any = { tenantId: req.user?.tenantId || 'default' };
+    const tenantId = getTenantId(req);
+    const where: any = { tenantId };
 
     if (dataInicio || dataFim) {
       where.dataVenda = {};
@@ -87,13 +90,13 @@ export class IntegrationsController {
         {
           model: Cliente,
           attributes: ['id', 'codigo', 'nome', 'tipoPessoa'],
-          where: { tenantId: req.user?.tenantId || 'default' },
+          where: { tenantId },
           required: false,
         },
         {
           model: Produto,
           attributes: ['id', 'nome', 'valorUnitario'],
-          where: { tenantId: req.user?.tenantId || 'default' },
+          where: { tenantId },
           required: false,
           through: { attributes: ['quantidade', 'valorUnitario'] },
         },
@@ -135,8 +138,9 @@ export class IntegrationsController {
   @ApiOperation({ summary: 'Exportar dados de produtos para integração (Power BI/n8n)' })
   @ApiResponse({ status: 200, description: 'Dados exportados com sucesso' })
   async exportProdutos(@Request() req: any) {
+    const tenantId = getTenantId(req);
     const produtos = await this.produtoModel.findAll({
-      where: { tenantId: req.user?.tenantId || 'default' },
+      where: { tenantId },
       attributes: [
         'id',
         'codigo',
@@ -170,7 +174,7 @@ export class IntegrationsController {
     @Query('dataInicio') dataInicio?: string,
     @Query('dataFim') dataFim?: string,
   ) {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const whereNegocio: any = { tenantId };
     
     if (dataInicio || dataFim) {

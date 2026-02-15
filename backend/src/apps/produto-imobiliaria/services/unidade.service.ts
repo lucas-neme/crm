@@ -47,7 +47,8 @@ export class UnidadeService {
         const unidade = await this.unidadeModel.findOne({ where: { id, tenantId } });
         if (!unidade) throw new Error('Unidade nao encontrada');
 
-        await unidade.update(data);
+        const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeData } = (data || {}) as any;
+        await unidade.update(safeData);
         return this.findOne(tenantId, id);
     }
 

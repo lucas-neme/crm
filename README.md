@@ -1,65 +1,59 @@
-# Projeto Full-Stack com NestJS
+# CRM SaaS (Shared Multi-Tenant)
 
-Este é um projeto full-stack que separa backend e frontend em pastas distintas.
+Projeto full-stack com backend NestJS + frontend Vue, rodando em uma unica stack Docker e multi-tenant logico.
 
-## 📁 Estrutura do Projeto
-
-```
-├── backend/          # Aplicação NestJS (Backend)
-├── frontend/         # Aplicação Frontend (a ser adicionada)
-└── .github/          # Configurações do GitHub
+## Estrutura
+```text
+backend/   API NestJS
+frontend/  App Vue + Nginx
 ```
 
-## 🚀 Backend
+## Modelo de tenancy (modo atual)
+- Uma stack (`docker-compose.yml`)
+- Um banco PostgreSQL (padrao: `crm`)
+- Multiplos tenants separados por `tenant_id` nas tabelas
+- Tenant resolvido pelo dominio/header (`x-tenant-id`)
+- Middleware global no backend injeta tenant no request context
+- Backend nunca confia em `tenant_id` enviado no payload
 
-O backend está desenvolvido com NestJS utilizando:
-- CQRS (Command Query Responsibility Segregation)
-- PostgreSQL + Sequelize
-- Swagger para documentação
-- i18n para internacionalização
+## Hardening de isolamento
+- Migration: `backend/migrations/20260215000000-hardening-tenant-and-rls.js`
+- Essa migration:
+  - torna `tenant_id` obrigatorio em todas as tabelas de dominio
+  - adiciona `tenant_id` em `configuracoes` e `documentos`
+  - aplica isolamento por policy RLS no PostgreSQL
+- Controle via env:
+  - `ENABLE_RLS=true` (opcional; padrao da migration e `false`)
+  - `DEFAULT_TENANT_ID=crm` (fallback para dados legados)
 
-📖 **[Documentação completa do backend](backend/README.md)**
-
-### Executar o Backend
-
+## Deploy (shared only)
+1. Crie o arquivo de ambiente:
 ```bash
-cd backend
-pnpm install
-pnpm start:dev
+cp .env.shared.example .env.shared
+```
+2. Ajuste secrets e conexao do Postgres em `.env.shared`.
+3. Suba a stack:
+```bash
+docker compose --env-file .env.shared -p crm-shared up -d --build
 ```
 
-## 🎨 Frontend
+## Nginx Proxy Manager
+Todos os dominios de tenants apontam para o mesmo frontend:
+- `crm.wampa.com.br` -> `frontend:80`
+- `crm2.wampa.com.br` -> `frontend:80`
+- `crm3.wampa.com.br` -> `frontend:80`
 
-Frontend será adicionado em breve.
+## Swagger
+- URL: `https://SEU_DOMINIO/api/docs`
+- Rotas protegidas exigem Bearer token.
 
-## 📝 Documentação
+## Termos para pesquisar (sua arquitetura)
+- `Shared-database multi-tenancy`
+- `Tenant discriminator column`
+- `Tenant isolation in application layer`
+- `Single-stack multi-tenant SaaS`
+- `PostgreSQL Row Level Security (RLS)` (opcional para endurecer isolamento)
 
-- **Backend**: Veja [backend/README.md](backend/README.md)
-- **Início Rápido**: Veja [backend/GETTING_STARTED.md](backend/GETTING_STARTED.md)
-
-## 🛠️ Configuração
-
-### Backend
-1. Configure o PostgreSQL (banco: crm, porta: 5432)
-2. Entre na pasta backend: `cd backend`
-3. Configure o arquivo `.env`
-4. Instale as dependências: `pnpm install`
-5. Execute: `pnpm start:dev`
-
-### Frontend
-_A ser definido_
-
-## 📊 Swagger
-
-Após executar o backend, acesse a documentação da API em:
-- http://localhost:3000/api/docs
-
-## 🤝 Contribuindo
-
-1. Clone o repositório
-2. Siga as instruções de configuração do backend
-3. Adicione o frontend quando necessário
-
----
-
-**Estrutura modular preparada para crescimento do projeto!** 🚀
+## Documentacao adicional
+- `backend/README.md`
+- `backend/GETTING_STARTED.md`

@@ -24,7 +24,8 @@ export class ImovelService {
     async update(tenantId: string, id: string, data: Partial<Imovel>) {
         const imovel = await this.imovelModel.findOne({ where: { id, tenantId } });
         if (!imovel) return null;
-        return imovel.update(data);
+        const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeData } = (data || {}) as any;
+        return imovel.update(safeData);
     }
 
     async remove(tenantId: string, id: string) {

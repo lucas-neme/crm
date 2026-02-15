@@ -38,7 +38,8 @@ export class FinanceiroService {
     async updatePagar(tenantId: string, id: string, updates: Partial<ContaPagar>) {
         const conta = await this.contaPagarModel.findOne({ where: { id, tenantId } });
         if (!conta) return null;
-        const updated = await conta.update(updates);
+        const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeUpdates } = (updates || {}) as any;
+        const updated = await conta.update(safeUpdates);
         this.triggerPowerBiSync(updated, 'PAGAR', 'UPDATE');
         return updated;
     }
@@ -73,7 +74,8 @@ export class FinanceiroService {
     async updateReceber(tenantId: string, id: string, updates: Partial<ContaReceber>) {
         const conta = await this.contaReceberModel.findOne({ where: { id, tenantId } });
         if (!conta) return null;
-        const updated = await conta.update(updates);
+        const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeUpdates } = (updates || {}) as any;
+        const updated = await conta.update(safeUpdates);
         this.triggerPowerBiSync(updated, 'RECEBER', 'UPDATE');
         return updated;
     }

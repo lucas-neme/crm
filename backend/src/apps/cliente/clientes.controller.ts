@@ -26,6 +26,7 @@ import { BaseResponse } from '@/common/interfaces/base-response.interface';
 import { Cliente } from './models/cliente.model';
 import { Endereco } from '@/common/models/endereco.model';
 import { InjectModel } from '@nestjs/sequelize';
+import { getTenantId } from '@/common/tenant/tenant-request.util';
 
 @ApiTags('clientes')
 @ApiBearerAuth()
@@ -48,7 +49,7 @@ export class ClientesController {
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async create(@Request() req: any, @Body() createClienteDto: CreateClienteDto): Promise<BaseResponse<Cliente>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const cliente = await this.commandBus.execute(
       new CreateClienteCommand(tenantId, createClienteDto),
     );
@@ -67,7 +68,7 @@ export class ClientesController {
     description: 'Lista de clientes',
   })
   async findAll(@Request() req: any): Promise<BaseResponse<Cliente[]>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const clientes = await this.queryBus.execute(new GetAllClientesQuery(tenantId));
 
     return {
@@ -85,7 +86,7 @@ export class ClientesController {
   })
   @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
   async findOne(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<Cliente>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const cliente = await this.queryBus.execute(new GetClienteByIdQuery(tenantId, id));
 
     return {
@@ -107,7 +108,7 @@ export class ClientesController {
     @Param('id') id: string,
     @Body() updateClienteDto: UpdateClienteDto,
   ): Promise<BaseResponse<Cliente>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const cliente = await this.commandBus.execute(
       new UpdateClienteCommand(tenantId, id, updateClienteDto),
     );
@@ -129,7 +130,7 @@ export class ClientesController {
   })
   @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
   async remove(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<boolean>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     await this.commandBus.execute(new DeleteClienteCommand(tenantId, id));
 
     return {
@@ -142,7 +143,7 @@ export class ClientesController {
   @Get(':id/enderecos')
   @ApiOperation({ summary: 'Listar endereços de um cliente' })
   async findEnderecos(@Request() req: any, @Param('id') id: string) {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const client = await this.queryBus.execute(new GetClienteByIdQuery(tenantId, id));
     if (!client) return { success: false, message: 'Cliente não encontrado' };
 
@@ -164,7 +165,8 @@ export class ClientesController {
   @Post(':id/enderecos')
   @ApiOperation({ summary: 'Adicionar endereço a um cliente' })
   async addEndereco(@Request() req: any, @Param('id') id: string, @Body() data: any) {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
+    const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeData } = data || {};
     if (data.isPreferencial) {
       // Desmarcar outros preferenciais do cliente
       await this.enderecoModel.update(
@@ -173,7 +175,7 @@ export class ClientesController {
       );
     }
     const address = await this.enderecoModel.create({
-      ...data,
+      ...safeData,
       tenantId,
       clienteId: id
     });
@@ -183,14 +185,15 @@ export class ClientesController {
   @Put(':id/enderecos/:addrId')
   @ApiOperation({ summary: 'Atualizar endereço de um cliente' })
   async updateEndereco(@Request() req: any, @Param('id') id: string, @Param('addrId') addrId: string, @Body() data: any) {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
+    const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeData } = data || {};
     if (data.isPreferencial) {
       await this.enderecoModel.update(
         { isPreferencial: false },
         { where: { clienteId: id, tenantId } }
       );
     }
-    await this.enderecoModel.update(data, { where: { id: addrId, clienteId: id, tenantId } });
+    await this.enderecoModel.update(safeData, { where: { id: addrId, clienteId: id, tenantId } });
     const address = await this.enderecoModel.findOne({ where: { id: addrId, tenantId } });
     return { success: true, data: address };
   }
@@ -198,7 +201,7 @@ export class ClientesController {
   @Delete(':id/enderecos/:addrId')
   @ApiOperation({ summary: 'Remover endereço de um cliente' })
   async deleteEndereco(@Request() req: any, @Param('id') id: string, @Param('addrId') addrId: string) {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     await this.enderecoModel.destroy({ where: { id: addrId, clienteId: id, tenantId } });
     return { success: true };
   }

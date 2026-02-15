@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -12,6 +12,7 @@ import { AuthModule } from './apps/auth/auth.module';
 import { FinanceiroModule } from './apps/financeiro/financeiro.module';
 import { ConfiguracoesModule } from './apps/configuracoes/configuracoes.module';
 import { ImovelModule } from './apps/produto-imobiliaria/imovel.module';
+import { TenantContextMiddleware } from './common/tenant/tenant-context.middleware';
 
 @Module({
   imports: [
@@ -61,4 +62,8 @@ import { ImovelModule } from './apps/produto-imobiliaria/imovel.module';
     ImovelModule,
   ],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantContextMiddleware).forRoutes('*');
+  }
+}

@@ -47,6 +47,7 @@ export class PropostaService {
     async update(tenantId: string, id: string, data: Partial<Proposta>): Promise<Proposta> {
         const proposta = await this.propostaModel.findOne({ where: { id, tenantId } });
         if (!proposta) throw new BadRequestException('Proposta nao encontrada');
-        return proposta.update(data);
+        const { tenantId: _tenantId, tenant_id: _tenantIdSnake, ...safeData } = (data || {}) as any;
+        return proposta.update(safeData);
     }
 }

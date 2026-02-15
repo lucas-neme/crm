@@ -21,6 +21,14 @@ export class Documento extends Model {
   id: string;
 
   @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'tenant_id',
+    unique: 'documentos_tenant_numero_unique',
+  })
+  tenantId: string;
+
+  @Column({
     type: DataType.ENUM('CPF', 'CNPJ', 'PASSAPORTE'),
     allowNull: false,
   })
@@ -29,7 +37,7 @@ export class Documento extends Model {
   @Column({
     type: DataType.STRING,
     allowNull: false,
-    unique: true,
+    unique: 'documentos_tenant_numero_unique',
   })
   numero: string;
 

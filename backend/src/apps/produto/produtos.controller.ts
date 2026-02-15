@@ -24,6 +24,7 @@ import { GetAllProdutosQuery } from './queries/impl/get-all-produtos.query';
 import { GetProdutoByIdQuery } from './queries/impl/get-produto-by-id.query';
 import { BaseResponse } from '@/common/interfaces/base-response.interface';
 import { Produto } from './models/produto.model';
+import { getTenantId } from '@/common/tenant/tenant-request.util';
 
 @ApiTags('produtos')
 @ApiBearerAuth()
@@ -44,7 +45,7 @@ export class ProdutosController {
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async create(@Request() req: any, @Body() createProdutoDto: CreateProdutoDto): Promise<BaseResponse<Produto>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const produto = await this.commandBus.execute(
       new CreateProdutoCommand(tenantId, createProdutoDto),
     );
@@ -63,7 +64,7 @@ export class ProdutosController {
     description: 'Lista de produtos',
   })
   async findAll(@Request() req: any): Promise<BaseResponse<Produto[]>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const produtos = await this.queryBus.execute(new GetAllProdutosQuery(tenantId));
 
     return {
@@ -81,7 +82,7 @@ export class ProdutosController {
   })
   @ApiResponse({ status: 404, description: 'Produto não encontrado' })
   async findOne(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<Produto>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const produto = await this.queryBus.execute(new GetProdutoByIdQuery(tenantId, id));
 
     return {
@@ -103,7 +104,7 @@ export class ProdutosController {
     @Param('id') id: string,
     @Body() updateProdutoDto: UpdateProdutoDto,
   ): Promise<BaseResponse<Produto>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const produto = await this.commandBus.execute(
       new UpdateProdutoCommand(tenantId, id, updateProdutoDto),
     );
@@ -125,7 +126,7 @@ export class ProdutosController {
   })
   @ApiResponse({ status: 404, description: 'Produto não encontrado' })
   async remove(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<boolean>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     await this.commandBus.execute(new DeleteProdutoCommand(tenantId, id));
 
     return {

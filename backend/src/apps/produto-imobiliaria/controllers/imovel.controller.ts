@@ -2,41 +2,47 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Request, UseGuards } f
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ImovelService } from '../services/imovel.service';
+import { getTenantId } from '@/common/tenant/tenant-request.util';
 
 @ApiTags('imoveis')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller('imoveis')
 export class ImovelController {
-    constructor(private readonly imovelService: ImovelService) { }
+  constructor(private readonly imovelService: ImovelService) {}
 
-    @Get()
-    @ApiOperation({ summary: 'Listar todos os imóveis' })
-    findAll(@Request() req: any) {
-        return this.imovelService.findAll(req.user?.tenantId || 'default');
-    }
+  @Get()
+  @ApiOperation({ summary: 'Listar todos os imoveis' })
+  findAll(@Request() req: any) {
+    const tenantId = getTenantId(req);
+    return this.imovelService.findAll(tenantId);
+  }
 
-    @Post()
-    @ApiOperation({ summary: 'Criar um novo imóvel' })
-    create(@Request() req: any, @Body() data: any) {
-        return this.imovelService.create(req.user?.tenantId || 'default', data);
-    }
+  @Post()
+  @ApiOperation({ summary: 'Criar um novo imovel' })
+  create(@Request() req: any, @Body() data: any) {
+    const tenantId = getTenantId(req);
+    return this.imovelService.create(tenantId, data);
+  }
 
-    @Get(':id')
-    @ApiOperation({ summary: 'Buscar imóvel por ID' })
-    findOne(@Request() req: any, @Param('id') id: string) {
-        return this.imovelService.findOne(req.user?.tenantId || 'default', id);
-    }
+  @Get(':id')
+  @ApiOperation({ summary: 'Buscar imovel por ID' })
+  findOne(@Request() req: any, @Param('id') id: string) {
+    const tenantId = getTenantId(req);
+    return this.imovelService.findOne(tenantId, id);
+  }
 
-    @Put(':id')
-    @ApiOperation({ summary: 'Atualizar imóvel' })
-    update(@Request() req: any, @Param('id') id: string, @Body() data: any) {
-        return this.imovelService.update(req.user?.tenantId || 'default', id, data);
-    }
+  @Put(':id')
+  @ApiOperation({ summary: 'Atualizar imovel' })
+  update(@Request() req: any, @Param('id') id: string, @Body() data: any) {
+    const tenantId = getTenantId(req);
+    return this.imovelService.update(tenantId, id, data);
+  }
 
-    @Delete(':id')
-    @ApiOperation({ summary: 'Excluir imóvel' })
-    remove(@Request() req: any, @Param('id') id: string) {
-        return this.imovelService.remove(req.user?.tenantId || 'default', id);
-    }
+  @Delete(':id')
+  @ApiOperation({ summary: 'Excluir imovel' })
+  remove(@Request() req: any, @Param('id') id: string) {
+    const tenantId = getTenantId(req);
+    return this.imovelService.remove(tenantId, id);
+  }
 }

@@ -1,50 +1,65 @@
 version: "3.8"
 
+# SHARED MODE:
+# - One frontend + one backend for all tenants.
+# - Tenant isolation happens in the app by tenant_id (domain/header).
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: crm-backend
+    container_name: crm-shared-backend
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
-      DB_SYNCHRONIZE: "false"
-      FRONTEND_URL: https://crm.wampa.com.br
-      SMTP_HOST: ""
-      SMTP_PORT: "587"
-      SMTP_SECURE: "false"
-      SMTP_USER: ""
-      SMTP_PASS: ""
-      SMTP_FROM: ""
-      # Apontando para o banco externo conforme seu .env local
-      DB_HOST: wampa.com.br
-      DB_PORT: 5433
-      DB_USERNAME: postgres
-      DB_PASSWORD: Davi_123
-      DB_DATABASE: crm
-      DB_NAME: crm
-    ports:
-      - "3000:3000"
+      DB_SYNCHRONIZE: "${DB_SYNCHRONIZE:-false}"
+      FRONTEND_URL: "${FRONTEND_URL:-https://crm.wampa.com.br}"
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_SECURE: "${SMTP_SECURE:-false}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      SMTP_FROM: "${SMTP_FROM:-}"
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_DATABASE: "${DB_DATABASE:-crm}"
+      DB_NAME: "${DB_DATABASE:-crm}"
+      NODE_OPTIONS: "${BACKEND_NODE_OPTIONS:---max-old-space-size=512}"
+    mem_limit: "${BACKEND_MEM_LIMIT:-700m}"
+    cpus: "${BACKEND_CPU_LIMIT:-1.00}"
     networks:
-      - crm-network
-      - proxynet
+      app-net:
+      proxynet:
+        aliases:
+          - backend
+          - crm-shared-backend
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: crm-frontend
+      args:
+        BACKEND_UPSTREAM: "backend:3000"
+    container_name: crm-shared-frontend
     restart: unless-stopped
     depends_on:
       - backend
+    mem_limit: "${FRONTEND_MEM_LIMIT:-350m}"
+    cpus: "${FRONTEND_CPU_LIMIT:-0.75}"
     networks:
-      - crm-network
-      - proxynet
+      app-net:
+      proxynet:
+        aliases:
+          - frontend
+          - crm-shared-frontend
 
 networks:
-  crm-network:
+  app-net:
     driver: bridge
   proxynet:
     external: true
+    name: "${PROXY_NETWORK:-proxynet}"

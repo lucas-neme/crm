@@ -24,6 +24,7 @@ import { GetAllNegociosQuery } from './queries/impl/get-all-negocios.query';
 import { GetNegocioByIdQuery } from './queries/impl/get-negocio-by-id.query';
 import { BaseResponse } from '@/common/interfaces/base-response.interface';
 import { Negocio } from './models/negocio.model';
+import { getTenantId } from '@/common/tenant/tenant-request.util';
 
 @ApiTags('negocios')
 @ApiBearerAuth()
@@ -44,7 +45,7 @@ export class NegociosController {
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async create(@Request() req: any, @Body() createNegocioDto: CreateNegocioDto): Promise<BaseResponse<Negocio>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const negocio = await this.commandBus.execute(
       new CreateNegocioCommand(tenantId, createNegocioDto),
     );
@@ -63,7 +64,7 @@ export class NegociosController {
     description: 'Lista de negócios',
   })
   async findAll(@Request() req: any): Promise<BaseResponse<Negocio[]>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const negocios = await this.queryBus.execute(new GetAllNegociosQuery(tenantId));
 
     return {
@@ -81,7 +82,7 @@ export class NegociosController {
   })
   @ApiResponse({ status: 404, description: 'Negócio não encontrado' })
   async findOne(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<Negocio>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const negocio = await this.queryBus.execute(new GetNegocioByIdQuery(tenantId, id));
 
     return {
@@ -103,7 +104,7 @@ export class NegociosController {
     @Param('id') id: string,
     @Body() updateNegocioDto: UpdateNegocioDto,
   ): Promise<BaseResponse<Negocio>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     const negocio = await this.commandBus.execute(
       new UpdateNegocioCommand(tenantId, id, updateNegocioDto),
     );
@@ -125,7 +126,7 @@ export class NegociosController {
   })
   @ApiResponse({ status: 404, description: 'Negócio não encontrado' })
   async remove(@Request() req: any, @Param('id') id: string): Promise<BaseResponse<boolean>> {
-    const tenantId = req.user?.tenantId || 'default';
+    const tenantId = getTenantId(req);
     await this.commandBus.execute(new DeleteNegocioCommand(tenantId, id));
 
     return {
