@@ -1,6 +1,7 @@
 import { useAuthStore } from '../stores/authStore'
 import { notificationsStore } from '../stores/notificationsStore'
 import { getApiBaseUrl } from '../utils/apiBase'
+import { resolveTenantHint } from '../utils/tenantHint'
 
 const API_URL = getApiBaseUrl()
 
@@ -17,8 +18,9 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
       headers.Authorization = `Bearer ${authStore.token}`
     }
 
-    if (authStore.user?.tenantId) {
-      headers['x-tenant-id'] = authStore.user.tenantId
+    const tenantId = authStore.user?.tenantId || resolveTenantHint()
+    if (tenantId) {
+      headers['x-tenant-id'] = tenantId
     }
 
     response = await fetch(`${API_URL}${endpoint}`, {

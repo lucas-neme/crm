@@ -15,6 +15,16 @@ export class TenantContextMiddleware implements NestMiddleware {
 
     const tenantId = subdomainTenant || headerTenant;
     if (!tenantId) {
+      const isLocal = !req.headers.host || 
+                      req.headers.host.includes('localhost') || 
+                      req.headers.host.includes('127.0.0.1') || 
+                      /^\d{1,3}(\.\d{1,3}){3}/.test(req.headers.host);
+      
+      if (isLocal) {
+        req.tenantId = (process.env.DEFAULT_TENANT_ID || 'crm').toLowerCase();
+        return next();
+      }
+      
       throw new BadRequestException('Tenant could not be resolved from host or x-tenant-id');
     }
 

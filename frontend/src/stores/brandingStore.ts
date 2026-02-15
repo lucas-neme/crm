@@ -9,6 +9,7 @@ export interface BrandingSettings {
   logoOffsetX: number
   logoOffsetY: number
   slogan: string
+  ownerDescription: string
   email: string
   telefone: string
   endereco: string
@@ -19,14 +20,15 @@ export interface BrandingSettings {
 const STORAGE_KEY = 'crm.branding'
 
 const defaultBranding: BrandingSettings = {
-  nomeCRM: 'CRM',
-  logoUrl: '',
+  nomeCRM: 'Nemer Negócios',
+  logoUrl: '/assets/images/logos/logo-owner.png',
   ownerPhotoUrl: '/assets/images/owners/owner-main.png',
-  ownerName: 'Proprietário do CRM',
+  ownerName: 'Nemer',
   logoScale: 100,
   logoOffsetX: 0,
   logoOffsetY: 0,
-  slogan: '',
+  slogan: 'Gestão comercial, relacionamento e operação em um único fluxo.',
+  ownerDescription: 'Experiência de verdade, compromisso com cada cliente e postura firme em cada negociação. No mercado imobiliário, segurança e resultado vêm com conhecimento e responsabilidade.',
   email: '',
   telefone: '',
   endereco: '',

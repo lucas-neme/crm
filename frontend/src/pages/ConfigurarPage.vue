@@ -39,6 +39,14 @@
                     <v-col cols="12">
                       <v-text-field v-model="form.website" label="Site" />
                     </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="form.slogan"
+                        label="Slogan (aparece no login)"
+                        hint="A frase que aparece abaixo do nome na tela de acesso."
+                        persistent-hint
+                      />
+                    </v-col>
                   </v-row>
                 </v-card-text>
               </v-card>
@@ -298,6 +306,13 @@
                       v-model="form.ownerName"
                       label="Nome do proprietário"
                       class="mt-3"
+                    />
+                    <v-textarea
+                      v-model="form.ownerDescription"
+                      label="Descrição/Frase do proprietário"
+                      class="mt-2"
+                      rows="3"
+                      hide-details
                     />
                   </div>
                 </v-card-text>
@@ -620,6 +635,8 @@ import { useModulesStore } from '../stores/modulesStore'
 import { useUsersStore } from '../stores/usersStore'
 import { notificationsStore } from '../stores/notificationsStore'
 import { maskCNPJ, maskPhone } from '../utils/formatters'
+import { getApiBaseUrl } from '../utils/apiBase'
+import { resolveTenantHint } from '../utils/tenantHint'
 
 const { branding, salvarBranding } = useBrandingStore()
 const authStore = useAuthStore()
@@ -703,11 +720,13 @@ const userHeaders = [
 const form = ref({
   nomeCRM: branding.value.nomeCRM,
   logoUrl: branding.value.logoUrl,
-  ownerPhotoUrl: branding.value.ownerPhotoUrl || '/assets/images/owners/owner-main.png',
-  ownerName: branding.value.ownerName || 'Proprietário do CRM',
+  ownerPhotoUrl: branding.value.ownerPhotoUrl,
+  ownerName: branding.value.ownerName,
+  ownerDescription: branding.value.ownerDescription,
   logoScale: branding.value.logoScale,
-  logoOffsetX: branding.value.logoOffsetX || 0,
-  logoOffsetY: branding.value.logoOffsetY || 0,
+  logoOffsetX: branding.value.logoOffsetX,
+  logoOffsetY: branding.value.logoOffsetY,
+  slogan: branding.value.slogan,
   email: branding.value.email,
   telefone: branding.value.telefone,
   endereco: branding.value.endereco,
@@ -715,8 +734,44 @@ const form = ref({
   cnpj: branding.value.cnpj,
 })
 
+const getConfigHeaders = () => ({
+  'Content-Type': 'application/json',
+  ...(authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}),
+  ...((authStore.user?.tenantId || resolveTenantHint())
+    ? { 'x-tenant-id': (authStore.user?.tenantId || resolveTenantHint()) as string }
+    : {}),
+})
+
+const fetchLoginPhraseConfig = async () => {
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/configuracoes/login_phrase`, {
+      headers: getConfigHeaders(),
+      cache: 'no-store',
+    })
+    if (!response.ok) return
+    const data = await response.json().catch(() => ({}))
+    if (data?.valor) {
+      form.value.slogan = String(data.valor)
+    }
+  } catch (error) {
+    console.warn('Could not fetch login phrase from backend:', error)
+  }
+}
+
+const persistLoginPhraseConfig = async () => {
+  const response = await fetch(`${getApiBaseUrl()}/configuracoes/login_phrase`, {
+    method: 'POST',
+    headers: getConfigHeaders(),
+    body: JSON.stringify({ valor: form.value.slogan || '' }),
+  })
+  if (!response.ok) {
+    throw new Error('Não foi possível salvar a frase da tela de login.')
+  }
+}
+
 onMounted(async () => {
   await modulesStore.fetchConfig()
+  await fetchLoginPhraseConfig()
   produtoModulo.value = modulesStore.produtoModulo === 'IMOBILIARIA' ? 'IMOBILIARIA' : 'PADRAO'
   enabledModulesForm.value = { ...modulesStore.enabledModules }
   if (isSystemAdmin.value) {
@@ -965,6 +1020,7 @@ const salvar = async () => {
   erroModulo.value = ''
   try {
     salvarBranding(form.value)
+    await persistLoginPhraseConfig()
     if (isSystemAdmin.value) {
       await modulesStore.setProdutoModulo(produtoModulo.value)
       await modulesStore.setEnabledModules(enabledModulesForm.value)

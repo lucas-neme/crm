@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getApiBaseUrl } from '../utils/apiBase'
+import { resolveTenantHint } from '../utils/tenantHint'
 
 interface User {
     id?: string;
@@ -16,14 +17,6 @@ export const useAuthStore = defineStore('auth', () => {
     // const router = useRouter()
 
     const isAuthenticated = computed(() => !!token.value)
-
-    function resolveTenantHint(): string | null {
-        if (typeof window === 'undefined') return null
-        const host = window.location.hostname
-        if (!host || host === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return null
-        const first = host.split('.')[0]
-        return first && first !== 'www' ? first : null
-    }
 
     function setToken(newToken: string) {
         token.value = newToken

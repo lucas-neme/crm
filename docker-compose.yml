@@ -28,6 +28,8 @@ services:
       DB_PASSWORD: "${DB_PASSWORD}"
       DB_DATABASE: "${DB_DATABASE:-crm}"
       DB_NAME: "${DB_DATABASE:-crm}"
+      DEFAULT_TENANT_ID: "${DEFAULT_TENANT_ID:-crm}"
+      TENANT_ADMIN_DEFAULT_PASSWORD: "${TENANT_ADMIN_DEFAULT_PASSWORD:-admin123*}"
       NODE_OPTIONS: "${BACKEND_NODE_OPTIONS:---max-old-space-size=512}"
     mem_limit: "${BACKEND_MEM_LIMIT:-700m}"
     cpus: "${BACKEND_CPU_LIMIT:-1.00}"

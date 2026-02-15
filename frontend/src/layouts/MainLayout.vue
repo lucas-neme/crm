@@ -110,7 +110,7 @@
               />
               <v-icon v-else icon="mdi-domain" color="#d4a878" size="20" />
             </div>
-            <span class="top-brand-text text-white">{{ branding.nomeCRM || 'Nemer Negócios' }}</span>
+            <span class="top-brand-text text-white">{{ branding.nomeCRM || 'CRM' }}</span>
           </RouterLink>
 
 
@@ -215,11 +215,7 @@ const modulesStore = useModulesStore()
 
 const { mobile } = useDisplay()
 const drawer = ref(!mobile.value)
-const crmLogoUrl = computed(() => {
-  const configured = (branding.value?.logoUrl || '').trim()
-  if (configured && !configured.includes('one-cup-logo')) return configured
-  return '/assets/images/logos/logo-owner.png'
-})
+const crmLogoUrl = computed(() => (branding.value?.logoUrl || '').trim())
 
 watch(mobile, (val) => {
   drawer.value = !val

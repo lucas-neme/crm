@@ -11,7 +11,7 @@
               <img :src="logoSrc" alt="Logo CRM" class="mobile-logo" />
             </div>
             <h1 class="mobile-title">{{ crmName }}</h1>
-            <p class="mobile-subtitle">Soluções imobiliárias com experiência e confiança</p>
+            <p v-if="slogan" class="mobile-subtitle">{{ slogan }}</p>
           </div>
 
           <v-sheet class="mobile-form-card" elevation="0">
@@ -119,7 +119,7 @@
             <div>
               <p class="brand-kicker">Plataforma inteligente</p>
               <h1 class="brand-title">{{ crmName }}</h1>
-              <p class="brand-subtitle">Gestão comercial, relacionamento e operação em um único fluxo.</p>
+              <p v-if="slogan" class="brand-subtitle">{{ slogan }}</p>
             </div>
           </div>
 
@@ -135,9 +135,8 @@
             <div class="owner-content">
               <p class="owner-label">Direção</p>
               <h2 class="owner-name">{{ ownerName }}</h2>
-              <p class="owner-text">
-                Experiência de verdade, compromisso com cada cliente e postura firme em cada negociação.
-                No mercado imobiliário, segurança e resultado vêm com conhecimento e responsabilidade.
+              <p v-if="ownerDescription" class="owner-text">
+                {{ ownerDescription }}
               </p>
             </div>
           </v-card>
@@ -223,11 +222,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '@/stores/authStore'
 import { useBrandingStore } from '@/stores/brandingStore'
+import { getApiBaseUrl } from '@/utils/apiBase'
+import { resolveTenantHint } from '@/utils/tenantHint'
 
 type AuthMode = 'login' | 'register' | 'forgot' | 'reset'
 
@@ -254,15 +255,31 @@ const forgotEmail = ref('')
 
 const resetToken = ref('')
 const resetPassword = ref('')
+const loginPhrase = ref('')
 
-const crmName = computed(() => brandingStore.branding.value.nomeCRM || 'CRM')
-const logoSrc = computed(() => {
-  const configured = (brandingStore.branding.value.logoUrl || '').trim()
-  if (configured && !configured.includes('one-cup-logo')) return configured
-  return '/assets/images/logos/logo-owner.png'
+const crmName = computed(() => brandingStore.branding.value.nomeCRM)
+const logoSrc = computed(() => brandingStore.branding.value.logoUrl)
+const ownerPhotoSrc = computed(() => brandingStore.branding.value.ownerPhotoUrl)
+const ownerName = computed(() => brandingStore.branding.value.ownerName)
+const slogan = computed(() => loginPhrase.value || brandingStore.branding.value.slogan)
+const ownerDescription = computed(() => brandingStore.branding.value.ownerDescription)
+
+onMounted(async () => {
+  try {
+    const tenantId = resolveTenantHint()
+    const response = await fetch(`${getApiBaseUrl()}/configuracoes/public/login_phrase`, {
+      headers: {
+        ...(tenantId ? { 'x-tenant-id': tenantId } : {}),
+      },
+      cache: 'no-store',
+    })
+    if (!response.ok) return
+    const data = await response.json().catch(() => ({}))
+    loginPhrase.value = String(data?.valor || '').trim()
+  } catch {
+    loginPhrase.value = ''
+  }
 })
-const ownerPhotoSrc = computed(() => brandingStore.branding.value.ownerPhotoUrl || '/assets/images/owners/owner-main.png')
-const ownerName = computed(() => brandingStore.branding.value.ownerName || 'Proprietário do CRM')
 
 function pushStatus(message: string, type: 'success' | 'error' | 'info' | 'warning') {
   statusMessage.value = message
