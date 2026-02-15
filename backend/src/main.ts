@@ -11,7 +11,6 @@ if (!(globalThis as any).crypto) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('api');
   app.use(requestAuditMiddleware);
 
   // Increase body size limit for large base64 images
