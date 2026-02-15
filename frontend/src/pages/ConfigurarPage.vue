@@ -638,7 +638,7 @@ import { maskCNPJ, maskPhone } from '../utils/formatters'
 import { getApiBaseUrl } from '../utils/apiBase'
 import { resolveTenantHint } from '../utils/tenantHint'
 
-const { branding, salvarBranding } = useBrandingStore()
+const { branding, salvarBranding, carregarBrandingPublico, salvarBrandingRemoto } = useBrandingStore()
 const authStore = useAuthStore()
 const modulesStore = useModulesStore()
 const usersStore = useUsersStore()
@@ -734,6 +734,25 @@ const form = ref({
   cnpj: branding.value.cnpj,
 })
 
+const syncFormFromBranding = () => {
+  form.value = {
+    nomeCRM: branding.value.nomeCRM,
+    logoUrl: branding.value.logoUrl,
+    ownerPhotoUrl: branding.value.ownerPhotoUrl,
+    ownerName: branding.value.ownerName,
+    ownerDescription: branding.value.ownerDescription,
+    logoScale: branding.value.logoScale,
+    logoOffsetX: branding.value.logoOffsetX,
+    logoOffsetY: branding.value.logoOffsetY,
+    slogan: branding.value.slogan,
+    email: branding.value.email,
+    telefone: branding.value.telefone,
+    endereco: branding.value.endereco,
+    website: branding.value.website,
+    cnpj: branding.value.cnpj,
+  }
+}
+
 const getConfigHeaders = () => ({
   'Content-Type': 'application/json',
   ...(authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}),
@@ -750,9 +769,7 @@ const fetchLoginPhraseConfig = async () => {
     })
     if (!response.ok) return
     const data = await response.json().catch(() => ({}))
-    if (data?.valor) {
-      form.value.slogan = String(data.valor)
-    }
+    form.value.slogan = String(data?.valor || '')
   } catch (error) {
     console.warn('Could not fetch login phrase from backend:', error)
   }
@@ -770,6 +787,8 @@ const persistLoginPhraseConfig = async () => {
 }
 
 onMounted(async () => {
+  await carregarBrandingPublico()
+  syncFormFromBranding()
   await modulesStore.fetchConfig()
   await fetchLoginPhraseConfig()
   produtoModulo.value = modulesStore.produtoModulo === 'IMOBILIARIA' ? 'IMOBILIARIA' : 'PADRAO'
@@ -1020,6 +1039,7 @@ const salvar = async () => {
   erroModulo.value = ''
   try {
     salvarBranding(form.value)
+    await salvarBrandingRemoto(authStore.token || '', authStore.user?.tenantId)
     await persistLoginPhraseConfig()
     if (isSystemAdmin.value) {
       await modulesStore.setProdutoModulo(produtoModulo.value)

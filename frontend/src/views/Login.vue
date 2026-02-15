@@ -266,6 +266,7 @@ const ownerDescription = computed(() => brandingStore.branding.value.ownerDescri
 
 onMounted(async () => {
   try {
+    await brandingStore.carregarBrandingPublico()
     const tenantId = resolveTenantHint()
     const response = await fetch(`${getApiBaseUrl()}/configuracoes/public/login_phrase`, {
       headers: {

@@ -7,21 +7,23 @@
       :width="mobile ? 296 : 232"
       class="sidebar"
     >
-      <div class="brand">
-        <div class="brand-logo-container">
-          <img
-            v-if="crmLogoUrl"
-            :src="crmLogoUrl"
-            alt="Logo"
-            class="brand-logo"
-            :style="{ transform: `translate(${branding.logoOffsetX || 0}px, ${branding.logoOffsetY || 0}px) scale(${branding.logoScale / 100})` }"
-          />
-          <div v-else class="brand-logo-placeholder">
-            <v-icon icon="mdi-domain" size="20" color="white" />
+      <template #prepend>
+        <div class="brand">
+          <div class="brand-logo-container">
+            <img
+              v-if="crmLogoUrl"
+              :src="crmLogoUrl"
+              alt="Logo"
+              class="brand-logo"
+              :style="{ transform: `translate(${branding.logoOffsetX || 0}px, ${branding.logoOffsetY || 0}px) scale(${branding.logoScale / 100})` }"
+            />
+            <div v-else class="brand-logo-placeholder">
+              <v-icon icon="mdi-domain" size="20" color="white" />
+            </div>
           </div>
+          <span class="brand-text">{{ branding.nomeCRM || 'CRM' }}</span>
         </div>
-        <span class="brand-text">{{ branding.nomeCRM || 'CRM' }}</span>
-      </div>
+      </template>
 
       <v-list nav density="comfortable">
         <v-list-item to="/" title="Home" prepend-icon="mdi-home" class="nav-item" />
@@ -87,11 +89,13 @@
         <v-list-item to="/configurar" title="Configurações" prepend-icon="mdi-cog" class="nav-item" />
       </v-list>
 
-      <div class="sidebar-spacer"></div>
-
-      <v-list nav density="comfortable" class="sidebar-bottom">
-        <v-list-item @click="handleLogout" title="Sair" prepend-icon="mdi-logout" class="nav-item" />
-      </v-list>
+      <template #append>
+        <div class="sidebar-footer">
+          <v-list nav density="comfortable">
+            <v-list-item @click="handleLogout" title="Sair" prepend-icon="mdi-logout" class="nav-item" />
+          </v-list>
+        </div>
+      </template>
     </v-navigation-drawer>
 
     <v-main class="main">
@@ -209,7 +213,8 @@ import { notificationsStore } from '../stores/notificationsStore'
 
 const router = useRouter()
 const route = useRoute()
-const { branding } = useBrandingStore()
+const brandingStore = useBrandingStore()
+const { branding } = brandingStore
 const authStore = useAuthStore()
 const modulesStore = useModulesStore()
 
@@ -229,6 +234,7 @@ watch(
 )
 
 onMounted(() => {
+  brandingStore.carregarBrandingPublico()
   modulesStore.fetchConfig()
 })
 
@@ -266,7 +272,8 @@ function handleLogout() {
 
 <style scoped>
 .layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -276,9 +283,13 @@ function handleLogout() {
 }
 
 .sidebar :deep(.v-navigation-drawer__content) {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0;
 }
 
 .brand {
@@ -324,15 +335,6 @@ function handleLogout() {
   line-height: 1;
 }
 
-.sidebar-spacer {
-  flex: 1 1 auto;
-}
-
-.sidebar-bottom {
-  margin-top: auto;
-  margin-bottom: 0.75rem;
-}
-
 .nav-item :deep(.v-list-item__prepend) {
   min-width: 26px;
   width: 26px;
@@ -353,7 +355,8 @@ function handleLogout() {
     linear-gradient(180deg, #edf3fb 0%, #e7eef7 100%);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .top-shell {

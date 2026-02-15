@@ -27,6 +27,21 @@ export class ConfiguracoesController {
     return { chave: 'login_phrase', valor: valor || '' };
   }
 
+  @Get('public/branding')
+  @ApiOperation({ summary: 'Obter branding publico do tenant para tela de login' })
+  async getPublicBranding(@Request() req: any) {
+    const tenantId = getTenantId(req);
+    const valor = await this.configService.getConfiguration(tenantId, 'branding_settings');
+    if (!valor) {
+      return { chave: 'branding_settings', valor: {} };
+    }
+    try {
+      return { chave: 'branding_settings', valor: JSON.parse(valor) };
+    } catch {
+      return { chave: 'branding_settings', valor: {} };
+    }
+  }
+
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get()
