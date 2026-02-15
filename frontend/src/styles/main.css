@@ -10,8 +10,8 @@
   --crm-text: #1f242d;
   --crm-text-soft: #5b6472;
   --crm-muted: #737b8a;
-  --crm-gold: #d7b16f;
-  --crm-gold-strong: #ecc788;
+  --crm-gold: #b58d48;
+  --crm-gold-strong: #d4a753;
   --crm-success: #4f9e72;
   --crm-danger: #cc6565;
   --crm-shadow: 0 12px 28px rgba(52, 60, 74, 0.12);
@@ -126,8 +126,8 @@ textarea {
 .v-btn.v-btn--variant-outlined,
 .v-btn.v-btn--variant-tonal,
 .v-btn.v-btn--variant-text {
-  color: #8f6d3e !important;
-  border-color: rgba(171, 136, 79, 0.28) !important;
+  color: #a37a38 !important;
+  border-color: rgba(163, 122, 56, 0.35) !important;
 }
 
 .v-btn:hover {
@@ -144,7 +144,7 @@ textarea {
 .v-table th,
 .v-data-table th {
   font-weight: 700 !important;
-  color: #8f6d3e !important;
+  color: #916d2a !important;
   border-bottom: 1px solid rgba(170, 176, 188, 0.35) !important;
 }
 
